@@ -135,44 +135,44 @@ Array = (struct, length) ->
   constructor: ->
    @struct = struct
    @length = length
-   @buffer = new ArrayBuffer @struct.bytes * @length
+   @buffer = new ArrayBuffer struct.bytes * length
    views = @views = []
-   for t, i in @struct.types
+   for t, i in struct.types
     @views.push new ArrayTypes[t] @buffer,
-     @struct.offsets[i] * @length
-     @length
+     struct.offsets[i] * length
+     length
 
   #functions for Struct instance
   begin: -> @get 0
 
-  end: -> @get @length-1
+  end: -> @get length-1
 
   get: (i) ->
-   if i < 0 or i >= @length
+   if i < 0 or i >= length
     null
-   new @struct null, views, i
+   new struct null, views, i
 
   set: (i, val) ->
-   if i < 0 or i >= @length
+   if i < 0 or i >= length
     return off
-   if @struct.id isnt val.id
+   if struct.id isnt val.id
     return off
 
    #TODO copy in here
-   o = new @struct null, views, i
+   o = new struct null, views, i
    o.copyFrom val
    return on
 
   #functions for objects
   getObject: (p) ->
-   o = new @struct.Object()
-   for k, i in @struct.keys
+   o = new struct.Object()
+   for k, i in struct.keys
     o[k] = views[i][p]
    o
 
   setObject: (p, obj) ->
    if obj?
-    for k, i in @struct.keys
+    for k, i in struct.keys
      if obj[k]?
       views[i][p] = obj[k]
    null
