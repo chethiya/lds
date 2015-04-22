@@ -128,42 +128,73 @@ Struct = ->
  Class.Object = RawObject
  Class
 
-class Array
- constructor: (struct, size) ->
-  @struct = struct
-  @size = size
-  @buffer = new ArrayBuffer @struct.bytes * @size
-  @views = []
-  for t, i in @struct.types
-   @views[i] = new ArrayTypes[t] @buffer, @struct.offsets[i]*size, @size
+Array = (struct, length) ->
+ class Class
+  constructor: ->
+   @struct = struct
+   @length = length
+   @buffer = new ArrayBuffer @struct.bytes * @length
+   @views = []
+   for t, i in @struct.types
+    @views[i] = new ArrayTypes[t] @buffer,
+     @struct.offsets[i] * @length
+     @length
 
-  #functions for individual getters and setters
+  #functions for Struct instance
+  begin: -> @get 0
 
+  end: -> @get @length-1
 
- #functions for Struct instance
- begin: ->
+  get: (i) ->
+   if i < 0 or i >= @length
+    null
+   new @struct null, @views, i
 
- end: ->
+  set: (i, val) ->
+   if i < 0 or i >= @length
+    return off
+   if @struct.id isnt val.id
+    return off
 
- get: (i) ->
-  if i < 0 or i >= @size
+   o = new @struct null, @views, i
+   o.copyFrom val
+   return on
+
+  #functions for objects
+  getObject: (p) ->
+   o = new @struct.Object()
+   for k, i in @struct.keys
+    o[k] = @views[i][p]
+   o
+
+  setObject: (p, obj) ->
+   if obj?
+    for k, i in @struct.keys
+     if obj[k]?
+      @views[i][p] = obj[k]
    null
-  new @struct null, @views, i
-
- set: (i, val) ->
-  if i < 0 or i >= @size
-   return off
-  if @struct.id isnt val.id
-   return off
-
-  o = new @struct null, @views, i
-  o.copyFrom val
-  return on
-
- #functions for objects
 
 
+  set_i: (p, i, v) ->
+   @views[i][p] = v
+   null
 
+  get_i: (p, i) -> @views[i][p]
+
+ #functions for individual getters and setters
+ for k, i in struct.keys
+  code = k.charCodeAt 0
+  tcase = k
+  if code <= 122 and code >= 97
+   tcase = (k.substr 0, 1).toUpperCase() + k.substr 1
+  do (i) ->
+   Class.prototype["set#{tcase}"] = (p, val) ->
+    @views[i][p] = val
+
+   Class.prototype["get#{tcase}"] = (p) ->
+    @views[i][p]
+
+ new Class()
 
 TDS =
  Types: Types
