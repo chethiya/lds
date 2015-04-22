@@ -107,6 +107,7 @@ Struct = ->
     return off
 
  for k, i in keys
+  Class[k.toUpperCase()] = i
   code = k.charCodeAt 0
   tcase = k
   if code <= 122 and code >= 97
@@ -129,14 +130,15 @@ Struct = ->
  Class
 
 Array = (struct, length) ->
+ views = null
  class Class
   constructor: ->
    @struct = struct
    @length = length
    @buffer = new ArrayBuffer @struct.bytes * @length
-   @views = []
+   views = @views = []
    for t, i in @struct.types
-    @views[i] = new ArrayTypes[t] @buffer,
+    @views.push new ArrayTypes[t] @buffer,
      @struct.offsets[i] * @length
      @length
 
@@ -148,7 +150,7 @@ Array = (struct, length) ->
   get: (i) ->
    if i < 0 or i >= @length
     null
-   new @struct null, @views, i
+   new @struct null, views, i
 
   set: (i, val) ->
    if i < 0 or i >= @length
@@ -156,7 +158,8 @@ Array = (struct, length) ->
    if @struct.id isnt val.id
     return off
 
-   o = new @struct null, @views, i
+   #TODO copy in here
+   o = new @struct null, views, i
    o.copyFrom val
    return on
 
@@ -164,22 +167,24 @@ Array = (struct, length) ->
   getObject: (p) ->
    o = new @struct.Object()
    for k, i in @struct.keys
-    o[k] = @views[i][p]
+    o[k] = views[i][p]
    o
 
   setObject: (p, obj) ->
    if obj?
     for k, i in @struct.keys
      if obj[k]?
-      @views[i][p] = obj[k]
+      views[i][p] = obj[k]
    null
 
 
-  set_i: (p, i, v) ->
-   @views[i][p] = v
+  set_prop: (p, i, v) ->
+   views[i][p] = v
    null
 
-  get_i: (p, i) -> @views[i][p]
+  get_prop: (p, i) -> views[i][p]
+
+  get_views: -> views
 
  #functions for individual getters and setters
  for k, i in struct.keys
@@ -189,10 +194,11 @@ Array = (struct, length) ->
    tcase = (k.substr 0, 1).toUpperCase() + k.substr 1
   do (i) ->
    Class.prototype["set#{tcase}"] = (p, val) ->
-    @views[i][p] = val
+    views[i][p] = val
+    null
 
    Class.prototype["get#{tcase}"] = (p) ->
-    @views[i][p]
+    views[i][p]
 
  new Class()
 
@@ -201,7 +207,10 @@ TDS =
  Struct: Struct
  Array: Array
 
-module.exports = TDS
+if GLOBAL?
+ module.exports = TDS
+else
+ window.TDS = TDS
 
 
 ###
