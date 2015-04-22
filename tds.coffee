@@ -26,6 +26,7 @@ Struct = ->
  id = null
  name = null
  keys = []
+ titleKeys = []
  types = []
  offsets = []
  n = 0
@@ -112,6 +113,7 @@ Struct = ->
   tcase = k
   if code <= 122 and code >= 97
    tcase = (k.substr 0, 1).toUpperCase() + k.substr 1
+  titleKeys.push tcase
   do (i) ->
    Class.prototype["set#{tcase}"] = (val) ->
     @views[i][@pos] = val
@@ -122,6 +124,7 @@ Struct = ->
  Class.id = id
  Class.name = name
  Class.keys = keys
+ Class.titleKeys = titleKeys
  Class.types = types
  Class.offsets = offsets
  Class.n = n
@@ -187,25 +190,240 @@ Array = (struct, length) ->
   get_views: -> views
 
  #functions for individual getters and setters
- for k, i in struct.keys
-  code = k.charCodeAt 0
-  tcase = k
-  if code <= 122 and code >= 97
-   tcase = (k.substr 0, 1).toUpperCase() + k.substr 1
+ for k, i in struct.titleKeys
   do (i) ->
-   Class.prototype["set#{tcase}"] = (p, val) ->
+   Class.prototype["set#{k}"] = (p, val) ->
     views[i][p] = val
     null
 
-   Class.prototype["get#{tcase}"] = (p) ->
+   Class.prototype["get#{k}"] = (p) ->
     views[i][p]
 
  new Class()
+
+
+INT_SIZE = 16
+MAX_SIZE = (1<<30) - (1<<3)
+
+
+ITER_CHANGE_VIEW = 1
+ITER_SUCCESS = 0
+ITER_FAIL = -1
+
+ArrayList = (struct, capacity) ->
+ arrays = null
+ allViews = null
+ sum = null
+
+ lastArr = null
+ lastViews = null
+ i_lastArr = i_lastPos = 0
+
+ findRes = [0, 0]
+ find = (p) ->
+  findRes[0] = 0
+  while findRes[0] < arrays.length
+   if p < sum[findRes[0]]
+    break
+   findRes[0]++
+  if findRes[0] is 0
+   findRes[1] = p
+  else
+   findRes[1] = p - sum[findRes[0]-1]
+
+ GetArrayListIterator = (i_arr, i_pos) ->
+  arr = null
+  views = null
+  class ArrayListIterator
+   constructor: ->
+    arr = arrays[i_arr]
+    views = arr.views
+
+   next: ->
+    #pos comes first considered the probabilities
+    if i_pos is i_lastPos and i_arr is i_lastArr
+     return ITER_FAIL
+    i_pos++
+    if i_pos is arr.length and i_arr isnt i_lastArr
+     i_pos = 0
+     i_arr++
+     arr = arrays[i_arr]
+     views = arr.views
+     ITER_CHANGE_VIEW
+    else
+     ITER_SUCCESS
+
+   prev: ->
+    #pos comes first considering the probabilities
+    if i_pos is 0 and i_arr is 0
+     return ITER_FAIL
+    i_pos--
+    if i_pos is -1
+     i_arr--
+     arr = arrays[i_arr]
+     views = arr.views
+     i_pos = arr.length - 1
+     ITER_CHANGE_VIEW
+    else
+     ITER_SUCCESS
+
+   get: ->
+    #arr.get i_pos
+    if i_pos is i_lastPos and i_arr is i_lastArr
+     null
+    new struct null, views, i_pos
+
+   set: (val) ->
+    #arr.set i_pos, val
+    if i_pos is i_lastPos and i_arr is i_lastArr
+     return off
+    if struct.id isnt val.id
+     return off
+
+    tarV = val.views
+    pos = val.pos
+    for j in [0...struct.n]
+     views[j][i_pos] = tarV[j][pos]
+    return on
+
+   getObject: ->
+    arr.getObject i_pos
+
+   setObject: (obj) ->
+    arr.setObject i_pos, obj
+
+   get_prop: (prop) ->
+    views[prop][i_pos]
+
+   set_prop: (pos, val) ->
+    views[prop][i_pos] = val
+    null
+
+   getViews: -> views
+
+  #functions for individual getters and setters
+  for k, i in struct.titleKeys
+   do (i) ->
+    ArrayListIterator.prototype["set#{k}"] = (val) ->
+     views[i][i_pos] = val
+     null
+
+    ArrayListIterator.prototype["get#{k}"] =  ->
+     views[i][i_pos]
+
+  new ArrayListIterator
+
+ class ArrayListClass
+  constructor: ->
+   arrays = @arrays = []
+   allViews = []
+   sum = []
+   @length = 0
+   @struct = struct
+
+   capacity ?= INT_SIZE
+   n = capacity * struct.bytes
+   if n > MAX_SIZE
+    capacity = Math.floor MAX_SIZE / struct.bytes
+   lastArr = TDS.Array struct, capacity
+   lastViews = lastArr.views
+   arrays.push lastArr
+   allViews.push lastViews
+   sum.push capacity
+
+  begin: ->
+   GetArrayListIterator 0, 0
+
+  end: ->
+   GetArrayListIterator i_lastArr, i_lastPos
+
+  get: (p) ->
+   if p < 0 or p >= @length
+    return null
+   find p
+   arrays[findRes[0]].get findRes[1]
+
+  set: (p, val) ->
+   if p < 0 or p >= @length
+    return off
+   if struct.id isnt val.id
+    return off
+
+   find p
+   tarViews = arrays[findRes[0]].views
+   srcViews = val.views
+   valPos = val.pos
+   for j in [0...struct.n]
+    tarViews[j][findRes[1]] = srcViews[j][valPos]
+   return on
+
+  get_prop: (i, prop) ->
+   find i
+   allViews[findRes[0]][prop][findRes[1]]
+
+  set_pro: (i, prop, val) ->
+   find i
+   allViews[findRes[0]][prop][findRes[1]] = val
+   null
+
+  setLast: (val) ->
+   srcViews = val.views
+   valPos = val.pos
+   for j in [0...struct.n]
+    lastViews[j][i_lastPos] = srcViews[j][valPos]
+   return on
+
+  push: (val) ->
+   if i_lastPos is lastArr.length
+    @addArray()
+   if val?
+    #lastArr.set i_lastPos, o
+    srcViews = val.views
+    valPos = val.pos
+    for j in [0...struct.n]
+     lastViews[j][i_lastPos] = srcViews[j][valPos]
+   i_lastPos++
+   @length++
+   return on
+
+  addArray: ->
+   n = lastArr.length
+   n *= 2
+   if n * struct.bytes > MAX_SIZE
+    n = Math.floor MAX_SIZE / struct.bytes
+
+   lastArr = TDS.Array struct, n
+   lastViews = lastArr.views
+   arrays.push lastArr
+   allViews.push lastViews
+   sum.push sum[i_lastArr] + n
+   i_lastArr++
+   i_lastPos = 0
+
+
+ #functions for individual getters and setters
+ for k, i in struct.titleKeys
+  do (i) ->
+   ArrayListClass.prototype["set#{k}"] = (p, val) ->
+    find p
+    allViews[findRes[0]][i][findRes[1]] = val
+    null
+
+   ArrayListClass.prototype["get#{k}"] = (p) ->
+    find p
+    allViews[findRes[0]][i][findRes[1]]
+
+ new ArrayListClass
 
 TDS =
  Types: Types
  Struct: Struct
  Array: Array
+ ArrayList: ArrayList
+ IteratorConsts:
+  ITER_CHANGE_VIEW: ITER_CHANGE_VIEW
+  ITER_SUCCESS: ITER_SUCCESS
+  ITER_FAIL: ITER_FAIL
 
 if GLOBAL?
  module.exports = TDS
