@@ -158,10 +158,10 @@ Array = (struct, length) ->
    if struct.id isnt val.id
     return off
 
-   #TODO copy in here
-   o = new struct null, views, i
-   o.copyFrom val
+   for j in [0...struct.n]
+    views[j][i] = val.views[j][val.pos]
    return on
+
 
   #functions for objects
   getObject: (p) ->
