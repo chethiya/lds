@@ -16,7 +16,6 @@ print = (list) ->
    if iter.next() is TDS.IteratorConsts.ITER_FAIL
     break
 
- console.log 'Random test'
  pass = on
  for i in [0...1000]
   p = Math.floor Math.random()*n
@@ -26,6 +25,26 @@ print = (list) ->
    pass = off
  console.log "res: ", pass
 
+
+test_js = (n) ->
+ n ?= 10000000
+
+ console.time 'time_js'
+ x = []
+ y = []
+ for i in [0...n]
+  x.push i
+  y.push i*2
+
+ console.timeEnd 'time_js'
+
+ pass = on
+ for i in [0...1000]
+  p = Math.floor Math.random()*n
+  p-- if p is n
+  if x[p] isnt p or y[p] isnt p*2
+   pass = off
+ console.log "res: ", pass
 
 test_push_type = (n) ->
  n ?= 10000000
@@ -145,7 +164,8 @@ test_push = (n) ->
  print list
 
 run = (iter) ->
- n = 100000000
+ n = 1000000
+ test_js n
  test_push_type n
  test_copy n
  test_set_last_prop n
