@@ -167,13 +167,13 @@ Array = (struct, length) ->
 
 
   #functions for objects
-  getObject: (p) ->
+  get_object: (p) ->
    o = new struct.Object()
    for k, i in struct.keys
     o[k] = views[i][p]
    o
 
-  setObject: (p, obj) ->
+  set_object: (p, obj) ->
    if obj?
     for k, i in struct.keys
      if obj[k]?
@@ -210,7 +210,8 @@ ITER_CHANGE_VIEW = 1
 ITER_SUCCESS = 0
 ITER_FAIL = -1
 
-ArrayList = (struct, capacity) ->
+ArrayList = (struct) ->
+ capacity = null
  arrays = null
  allViews = null
  sum = null
@@ -218,6 +219,8 @@ ArrayList = (struct, capacity) ->
  lastArr = null
  lastViews = null
  i_lastArr = i_lastPos = 0
+ i_llp = -1
+ i_lla = 0
 
  findRes = [0, 0]
  find = (p) ->
@@ -241,10 +244,11 @@ ArrayList = (struct, capacity) ->
 
    next: ->
     #pos comes first considered the probabilities
-    if i_pos is i_lastPos and i_arr is i_lastArr
+    if i_pos is i_lastPos-1 and i_arr is i_lastArr
      return ITER_FAIL
+
     i_pos++
-    if i_pos is arr.length and i_arr isnt i_lastArr
+    if i_pos is arr.length
      i_pos = 0
      i_arr++
      arr = arrays[i_arr]
@@ -286,20 +290,20 @@ ArrayList = (struct, capacity) ->
      views[j][i_pos] = tarV[j][pos]
     return on
 
-   getObject: ->
-    arr.getObject i_pos
+   get_object: ->
+    arr.get_object i_pos
 
-   setObject: (obj) ->
-    arr.setObject i_pos, obj
+   set_object: (obj) ->
+    arr.set_object i_pos, obj
 
    get_prop: (prop) ->
     views[prop][i_pos]
 
-   set_prop: (pos, val) ->
+   set_prop: (prop, val) ->
     views[prop][i_pos] = val
     null
 
-   getViews: -> views
+   get_views: -> views
 
   #functions for individual getters and setters
   for k, i in struct.titleKeys
@@ -332,9 +336,13 @@ ArrayList = (struct, capacity) ->
    sum.push capacity
 
   begin: ->
+   if @length is 0
+    return null
    GetArrayListIterator 0, 0
 
   end: ->
+   if @length is 0
+    return null
    GetArrayListIterator i_lastArr, i_lastPos
 
   get: (p) ->
@@ -357,6 +365,18 @@ ArrayList = (struct, capacity) ->
     tarViews[j][findRes[1]] = srcViews[j][valPos]
    return on
 
+  get_object: (p) ->
+   if p < 0 or p >= @length
+    return null
+   find p
+   arrays[findRes[0]].get_object findRes[1]
+
+  set_object: (p, obj) ->
+   if p < 0 or p >= @length
+    return off
+   find p
+   arrays[findRes[0]].set_object findRes[1], obj
+
   get_prop: (i, prop) ->
    find i
    allViews[findRes[0]][prop][findRes[1]]
@@ -366,16 +386,26 @@ ArrayList = (struct, capacity) ->
    allViews[findRes[0]][prop][findRes[1]] = val
    null
 
-  setLast: (val) ->
-   srcViews = val.views
-   valPos = val.pos
-   for j in [0...struct.n]
-    lastViews[j][i_lastPos] = srcViews[j][valPos]
-   return on
+  get_lastViews: -> lastViews
+  get_allViews: -> allViews
+
+  set_lastProp: (prop, val) ->
+   lastViews[prop][i_llp] = val
+   return null
+
+  get_lastProp: (prop) ->
+   lastViews[prop][i_llp]
 
   push: (val) ->
+   res = off
    if i_lastPos is lastArr.length
     @addArray()
+    i_lla++
+    i_llp = 0
+    res = on
+   else
+    i_llp++
+
    if val?
     #lastArr.set i_lastPos, o
     srcViews = val.views
@@ -384,7 +414,7 @@ ArrayList = (struct, capacity) ->
      lastViews[j][i_lastPos] = srcViews[j][valPos]
    i_lastPos++
    @length++
-   return on
+   return res
 
   addArray: ->
    n = lastArr.length
