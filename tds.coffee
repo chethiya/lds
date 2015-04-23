@@ -203,15 +203,14 @@ Array = (struct, length) ->
 
 
 INT_SIZE = 16
-MAX_SIZE = (1<<30) - (1<<3)
+MAX_SIZE = 1<<26
 
 
 ITER_CHANGE_VIEW = 1
 ITER_SUCCESS = 0
 ITER_FAIL = -1
 
-ArrayList = (struct) ->
- capacity = null
+ArrayList = (struct, capacity) ->
  arrays = null
  allViews = null
  sum = null
@@ -325,15 +324,37 @@ ArrayList = (struct) ->
    @length = 0
    @struct = struct
 
-   capacity ?= INT_SIZE
-   n = capacity * struct.bytes
-   if n > MAX_SIZE
-    capacity = Math.floor MAX_SIZE / struct.bytes
-   lastArr = TDS.Array struct, capacity
-   lastViews = lastArr.views
-   arrays.push lastArr
-   allViews.push lastViews
-   sum.push capacity
+   if capacity?
+    @length = capacity
+    n = capacity
+    size = INT_SIZE
+    ls = 0
+    while true
+     console.log 'creating ', size
+     lastArr = TDS.Array struct, size
+     lastViews = lastArr.views
+     arrays.push lastArr
+     allViews.push lastViews
+     ls += size
+     sum.push ls
+
+     if n <= size
+      i_lastArr = arrays.length-1
+      i_lastPos = n
+      i_lla = i_lastArr
+      i_llp = n-1
+      break
+
+     n -= size
+     if size isnt MAX_SIZE
+      size = size << 1
+   else
+    capacity = INT_SIZE
+    lastArr = TDS.Array struct, capacity
+    lastViews = lastArr.views
+    arrays.push lastArr
+    allViews.push lastViews
+    sum.push capacity
 
   begin: ->
    if @length is 0
@@ -418,10 +439,10 @@ ArrayList = (struct) ->
 
   addArray: ->
    n = lastArr.length
-   n *= 2
-   if n * struct.bytes > MAX_SIZE
-    n = Math.floor MAX_SIZE / struct.bytes
+   if n isnt MAX_SIZE
+    n = n << 1
 
+   capacity += n
    lastArr = TDS.Array struct, n
    lastViews = lastArr.views
    arrays.push lastArr
