@@ -204,7 +204,7 @@ Array = (struct, length) ->
 
 INT_SIZE = 16
 MAX_SIZE = 1<<26
-
+MAX_LINEAR_FIND_LEN = 20
 
 ITER_CHANGE_VIEW = 1
 ITER_SUCCESS = 0
@@ -222,7 +222,8 @@ ArrayList = (struct, capacity) ->
  i_lla = 0
 
  findRes = [0, 0]
- find = (p) ->
+
+ find_linear = (p) ->
   findRes[0] = 0
   while findRes[0] < arrays.length
    if p < sum[findRes[0]]
@@ -232,6 +233,124 @@ ArrayList = (struct, capacity) ->
    findRes[1] = p
   else
    findRes[1] = p - sum[findRes[0]-1]
+  return null
+
+ find_binary_search = (p) ->
+  bs_l = 0
+  bs_r = i_lastArr
+  while bs_l < bs_r
+   bs_m = bs_l + ((bs_r-bs_l) >> 1)
+   if p >= sum[bs_m]
+    bs_l = bs_m + 1
+   else
+    bs_r = bs_m
+  findRes[0] = bs_l
+  if bs_l is 0
+   findRes[1] = p
+  else
+   findRes[1] = p - sum[bs_l-1]
+  return
+
+ find_inline = (p) ->
+  if p < 16
+   findRes[0] = 0
+   findRes[1] = p - 0
+   return
+  if p < 48
+   findRes[0] = 1
+   findRes[1] = p - 16
+   return
+  if p < 112
+   findRes[0] = 2
+   findRes[1] = p - 48
+   return
+  if p < 240
+   findRes[0] = 3
+   findRes[1] = p - 112
+   return
+  if p < 496
+   findRes[0] = 4
+   findRes[1] = p - 240
+   return
+  if p < 1008
+   findRes[0] = 5
+   findRes[1] = p - 496
+   return
+  if p < 2032
+   findRes[0] = 6
+   findRes[1] = p - 1008
+   return
+  if p < 4080
+   findRes[0] = 7
+   findRes[1] = p - 2032
+   return
+  if p < 8176
+   findRes[0] = 8
+   findRes[1] = p - 4080
+   return
+  if p < 16368
+   findRes[0] = 9
+   findRes[1] = p - 8176
+   return
+  if p < 32752
+   findRes[0] = 10
+   findRes[1] = p - 16368
+   return
+  if p < 65520
+   findRes[0] = 11
+   findRes[1] = p - 32752
+   return
+  if p < 131056
+   findRes[0] = 12
+   findRes[1] = p - 65520
+   return
+  if p < 262128
+   findRes[0] = 13
+   findRes[1] = p - 131056
+   return
+  if p < 524272
+   findRes[0] = 14
+   findRes[1] = p - 262128
+   return
+  if p < 1048560
+   findRes[0] = 15
+   findRes[1] = p - 524272
+   return
+  if p < 2097136
+   findRes[0] = 16
+   findRes[1] = p - 1048560
+   return
+  if p < 4194288
+   findRes[0] = 17
+   findRes[1] = p - 2097136
+   return
+  if p < 8388592
+   findRes[0] = 18
+   findRes[1] = p - 4194288
+   return
+  if p < 16777200
+   findRes[0] = 19
+   findRes[1] = p - 8388592
+   return
+  if p < 33554416
+   findRes[0] = 20
+   findRes[1] = p - 16777200
+   return
+  return
+
+ #find = find_inline
+ ###
+ # inline find is faster for small number of arrays
+ # binar search should be used after
+ # In this case since the inline code is fast since it go no
+ # loops. So I hope 20 is a good number
+ ###
+ #
+ find = (p) ->
+  if p < 33554416 #sum at the 20th index
+   find_inline p
+  else
+   find_binary_search p
 
  GetArrayListIterator = (i_arr, i_pos) ->
   arr = null
@@ -330,7 +449,6 @@ ArrayList = (struct, capacity) ->
     size = INT_SIZE
     ls = 0
     while true
-     console.log 'creating ', size
      lastArr = TDS.Array struct, size
      lastViews = lastArr.views
      arrays.push lastArr
@@ -450,7 +568,6 @@ ArrayList = (struct, capacity) ->
    sum.push sum[i_lastArr] + n
    i_lastArr++
    i_lastPos = 0
-
 
  #functions for individual getters and setters
  for k, i in struct.titleKeys
