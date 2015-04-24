@@ -273,22 +273,25 @@ ArrayList = (struct, start_size, min_capacity) ->
 
  GetArrayListIterator = (i_arr, i_pos) ->
   arr = null
+  arrLen = 0
   views = null
   class ArrayListIterator
    constructor: ->
     arr = arrays[i_arr]
+    arrLen = arr.length
     views = arr.views
 
    next: ->
     #pos comes first considered the probabilities
-    if i_pos is i_lastPos-1 and i_arr is i_lastArr
+    if i_pos is i_llp and i_arr is i_lla
      return ITER_FAIL
 
     i_pos++
-    if i_pos is arr.length
+    if i_pos is arrLen
      i_pos = 0
      i_arr++
      arr = arrays[i_arr]
+     arrLen = arr.length
      views = arr.views
      ITER_CHANGE_VIEW
     else
@@ -302,22 +305,17 @@ ArrayList = (struct, start_size, min_capacity) ->
     if i_pos is -1
      i_arr--
      arr = arrays[i_arr]
+     arrLen = arr.length
      views = arr.views
-     i_pos = arr.length - 1
+     i_pos = arrLen - 1
      ITER_CHANGE_VIEW
     else
      ITER_SUCCESS
 
    get: ->
-    #arr.get i_pos
-    if i_pos is i_lastPos and i_arr is i_lastArr
-     null
     new struct null, views, i_pos
 
    set: (val) ->
-    #arr.set i_pos, val
-    if i_pos is i_lastPos and i_arr is i_lastArr
-     return off
     if struct.id isnt val.id
      return off
 
@@ -413,7 +411,7 @@ ArrayList = (struct, start_size, min_capacity) ->
   end: ->
    if length is 0
     return null
-   GetArrayListIterator i_lastArr, i_lastPos
+   GetArrayListIterator i_lla, i_llp
 
   get: (p) ->
    if p < 0 or p >= length
