@@ -26,7 +26,7 @@ print = (list) ->
  console.log "res: ", pass
 
 
-test_js = (n) ->
+test_js = (n, opt) ->
  n ?= 10000000
 
  console.time 'time_js'
@@ -46,11 +46,11 @@ test_js = (n) ->
    pass = off
  console.log "res: ", pass
 
-test_push_type = (n) ->
+test_push_type = (n, opt) ->
  n ?= 10000000
 
  console.time 'time_push_type'
- list = TDS.ArrayList Point
+ list = TDS.ArrayList Point, null, opt.min_cap
  p = new Point
  for i in [0...n]
   p.setX i
@@ -61,11 +61,11 @@ test_push_type = (n) ->
 
  print list
 
-test_copy = (n) ->
+test_copy = (n, opt) ->
  n ?= 10000000
 
  console.time 'time_copy'
- list = TDS.ArrayList Point
+ list = TDS.ArrayList Point, null, opt.min_cap
  p = new Point
  for i in [0...n]
   p.setX i
@@ -76,11 +76,11 @@ test_copy = (n) ->
  console.timeEnd 'time_copy'
  print list
 
-test_set_last_prop = (n) ->
+test_set_last_prop = (n, opt) ->
  n ?= 10000000
 
  console.time 'time_set_last_prop'
- list = TDS.ArrayList Point
+ list = TDS.ArrayList Point, null, opt.min_cap
  X = Point.X
  Y = Point.Y
  for i in [0...n]
@@ -91,13 +91,13 @@ test_set_last_prop = (n) ->
  console.timeEnd 'time_set_last_prop'
  print list
 
-test_iter = (n) ->
+test_iter = (n, opt) ->
  n ?= 10000000
  ITER_FAIL = TDS.IteratorConsts.ITER_FAIL
  ITER_CHANGE_VIEW = TDS.IteratorConsts.ITER_CHANGE_VIEW
 
  console.time 'time_iter'
- list = TDS.ArrayList Point
+ list = TDS.ArrayList Point, null, opt.min_cap
  iter = null
  X = Point.X
  Y = Point.Y
@@ -121,13 +121,13 @@ test_iter = (n) ->
  console.timeEnd 'time_iter'
  print list
 
-test_iter_prop = (n) ->
+test_iter_prop = (n, opt) ->
  n ?= 10000000
  ITER_FAIL = TDS.IteratorConsts.ITER_FAIL
  ITER_CHANGE_VIEW = TDS.IteratorConsts.ITER_CHANGE_VIEW
 
  console.time 'time_iter_prop'
- list = TDS.ArrayList Point
+ list = TDS.ArrayList Point, null, opt.min_cap
  iter = null
  X = Point.X
  Y = Point.Y
@@ -143,11 +143,11 @@ test_iter_prop = (n) ->
  console.timeEnd 'time_iter_prop'
  print list
 
-test_push = (n) ->
+test_push = (n, opt) ->
  n ?= 10000000
 
  console.time 'time_push_with_views'
- list = TDS.ArrayList Point
+ list = TDS.ArrayList Point, null, opt.min_cap
  X = Point.X
  Y = Point.Y
  views = list.get_lastViews()
@@ -164,14 +164,14 @@ test_push = (n) ->
  print list
 
 run = (iter) ->
- n = 1000000
- test_js n
- test_push_type n
- test_copy n
- test_set_last_prop n
- test_iter n
- test_iter_prop n
- test_push n
+ n = 100000000
+ #test_js n
+ test_push_type n, min_cap: n
+ test_copy n, min_cap: n
+ test_set_last_prop n, min_cap: n
+ test_iter n, min_cap: n
+ test_iter_prop n, min_cap: n
+ test_push n, min_cap: n
 
 if GLOBAL?
  #exports.run = run
