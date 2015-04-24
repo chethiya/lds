@@ -204,16 +204,20 @@ Array = (struct, length) ->
 
 INT_SIZE = 16
 MAX_SIZE = 1<<26
-MAX_LINEAR_FIND_LEN = 20
+MAX_LINEAR_ARRAY_INDEX = 2
 
 ITER_CHANGE_VIEW = 1
 ITER_SUCCESS = 0
 ITER_FAIL = -1
 
-ArrayList = (struct, capacity) ->
+
+ArrayList = (struct, start_size, min_capacity) ->
  arrays = null
  allViews = null
  sum = null
+
+ capacity = 0
+ length = 0
 
  lastArr = null
  lastViews = null
@@ -222,10 +226,11 @@ ArrayList = (struct, capacity) ->
  i_lla = 0
 
  findRes = [0, 0]
+ MAX_LINEAR_FIND_INDEX = MAX_SIZE * (MAX_LINEAR_ARRAY_INDEX + 1)
 
  find_linear = (p) ->
   findRes[0] = 0
-  while findRes[0] < arrays.length
+  while true
    if p < sum[findRes[0]]
     break
    findRes[0]++
@@ -251,106 +256,20 @@ ArrayList = (struct, capacity) ->
    findRes[1] = p - sum[bs_l-1]
   return
 
- find_inline = (p) ->
-  if p < 16
-   findRes[0] = 0
-   findRes[1] = p - 0
-   return
-  if p < 48
-   findRes[0] = 1
-   findRes[1] = p - 16
-   return
-  if p < 112
-   findRes[0] = 2
-   findRes[1] = p - 48
-   return
-  if p < 240
-   findRes[0] = 3
-   findRes[1] = p - 112
-   return
-  if p < 496
-   findRes[0] = 4
-   findRes[1] = p - 240
-   return
-  if p < 1008
-   findRes[0] = 5
-   findRes[1] = p - 496
-   return
-  if p < 2032
-   findRes[0] = 6
-   findRes[1] = p - 1008
-   return
-  if p < 4080
-   findRes[0] = 7
-   findRes[1] = p - 2032
-   return
-  if p < 8176
-   findRes[0] = 8
-   findRes[1] = p - 4080
-   return
-  if p < 16368
-   findRes[0] = 9
-   findRes[1] = p - 8176
-   return
-  if p < 32752
-   findRes[0] = 10
-   findRes[1] = p - 16368
-   return
-  if p < 65520
-   findRes[0] = 11
-   findRes[1] = p - 32752
-   return
-  if p < 131056
-   findRes[0] = 12
-   findRes[1] = p - 65520
-   return
-  if p < 262128
-   findRes[0] = 13
-   findRes[1] = p - 131056
-   return
-  if p < 524272
-   findRes[0] = 14
-   findRes[1] = p - 262128
-   return
-  if p < 1048560
-   findRes[0] = 15
-   findRes[1] = p - 524272
-   return
-  if p < 2097136
-   findRes[0] = 16
-   findRes[1] = p - 1048560
-   return
-  if p < 4194288
-   findRes[0] = 17
-   findRes[1] = p - 2097136
-   return
-  if p < 8388592
-   findRes[0] = 18
-   findRes[1] = p - 4194288
-   return
-  if p < 16777200
-   findRes[0] = 19
-   findRes[1] = p - 8388592
-   return
-  if p < 33554416
-   findRes[0] = 20
-   findRes[1] = p - 16777200
-   return
-  return
-
  #find = find_inline
  ###
- # inline find is faster for small number of arrays
+ # linear find is faster for small number of arrays
  # binar search should be used after
- # In this case since the inline code is fast since it go no
- # loops. So I hope 20 is a good number
- ###
  #
- find = (p) ->
-  if p < 33554416 #sum at the 20th index
-   find_inline p
+ #P.S. This seems to be of no use. Having binary search for all cases
+ ####
+ find_hybrid = (p) ->
+  if p < MAX_LINEAR_FIND_INDEX
+   find_linear p
   else
    find_binary_search p
+
+ find = find_binary_search
 
  GetArrayListIterator = (i_arr, i_pos) ->
   arr = null
@@ -440,16 +359,21 @@ ArrayList = (struct, capacity) ->
    arrays = @arrays = []
    allViews = []
    sum = []
-   @length = 0
+   length = @length = 0
    @struct = struct
+   size = 0
 
-   if capacity?
-    @length = capacity
-    n = capacity
+   if start_size?
+    length = @length = start_size
+    n = start_size
     size = INT_SIZE
+    while size isnt MAX_SIZE and n > size
+     size = size << 1
+
     ls = 0
     while true
      lastArr = TDS.Array struct, size
+     capacity += size
      lastViews = lastArr.views
      arrays.push lastArr
      allViews.push lastViews
@@ -468,30 +392,37 @@ ArrayList = (struct, capacity) ->
       size = size << 1
    else
     capacity = INT_SIZE
+    if min_capacity?
+     while capacity isnt MAX_SIZE and capacity < min_capacity
+      capacity = capacity << 1
+    size = capacity
     lastArr = TDS.Array struct, capacity
     lastViews = lastArr.views
     arrays.push lastArr
     allViews.push lastViews
     sum.push capacity
 
+   if i_lastArr >= MAX_LINEAR_ARRAY_INDEX
+    MAX_LINEAR_FIND_INDEX = sum[MAX_LINEAR_ARRAY_INDEX]
+
   begin: ->
-   if @length is 0
+   if length is 0
     return null
    GetArrayListIterator 0, 0
 
   end: ->
-   if @length is 0
+   if length is 0
     return null
    GetArrayListIterator i_lastArr, i_lastPos
 
   get: (p) ->
-   if p < 0 or p >= @length
+   if p < 0 or p >= length
     return null
    find p
    arrays[findRes[0]].get findRes[1]
 
   set: (p, val) ->
-   if p < 0 or p >= @length
+   if p < 0 or p >= length
     return off
    if struct.id isnt val.id
     return off
@@ -505,25 +436,29 @@ ArrayList = (struct, capacity) ->
    return on
 
   get_object: (p) ->
-   if p < 0 or p >= @length
+   if p < 0 or p >= length
     return null
    find p
    arrays[findRes[0]].get_object findRes[1]
 
   set_object: (p, obj) ->
-   if p < 0 or p >= @length
+   if p < 0 or p >= length
     return off
    find p
    arrays[findRes[0]].set_object findRes[1], obj
 
   get_prop: (i, prop) ->
+   if i < 0 or i >= length
+    return null
    find i
    allViews[findRes[0]][prop][findRes[1]]
 
   set_pro: (i, prop, val) ->
+   if i < 0 or i >= length
+    return off
    find i
    allViews[findRes[0]][prop][findRes[1]] = val
-   null
+   return on
 
   get_lastViews: -> lastViews
   get_allViews: -> allViews
@@ -553,6 +488,7 @@ ArrayList = (struct, capacity) ->
      lastViews[j][i_lastPos] = srcViews[j][valPos]
    i_lastPos++
    @length++
+   length++
    return res
 
   addArray: ->
@@ -569,15 +505,22 @@ ArrayList = (struct, capacity) ->
    i_lastArr++
    i_lastPos = 0
 
+   if i_lastArr >= MAX_LINEAR_ARRAY_INDEX
+    MAX_LINEAR_FIND_INDEX = sum[MAX_LINEAR_ARRAY_INDEX]
+
  #functions for individual getters and setters
  for k, i in struct.titleKeys
   do (i) ->
    ArrayListClass.prototype["set#{k}"] = (p, val) ->
+    if p < 0 or p >= length
+     return off
     find p
     allViews[findRes[0]][i][findRes[1]] = val
-    null
+    return on
 
    ArrayListClass.prototype["get#{k}"] = (p) ->
+    if p < 0 or p >= length
+     return null
     find p
     allViews[findRes[0]][i][findRes[1]]
 
