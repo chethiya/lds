@@ -220,6 +220,7 @@ ArrayList = (struct, start_size, min_capacity) ->
  length = 0
 
  lastArr = null
+ lastArrLen = 0
  lastViews = null
  i_lastArr = i_lastPos = 0
  i_llp = -1
@@ -400,6 +401,7 @@ ArrayList = (struct, start_size, min_capacity) ->
     allViews.push lastViews
     sum.push capacity
 
+   lastArrLen = arrays[i_lastArr].length
    if i_lastArr >= MAX_LINEAR_ARRAY_INDEX
     MAX_LINEAR_FIND_INDEX = sum[MAX_LINEAR_ARRAY_INDEX]
 
@@ -470,7 +472,7 @@ ArrayList = (struct, start_size, min_capacity) ->
 
   push: (val) ->
    res = off
-   if i_lastPos is lastArr.length
+   if i_lastPos is lastArrLen
     @addArray()
     i_lla++
     i_llp = 0
@@ -490,12 +492,13 @@ ArrayList = (struct, start_size, min_capacity) ->
    return res
 
   addArray: ->
-   n = lastArr.length
+   n = lastArrLen
    if n isnt MAX_SIZE
     n = n << 1
 
    capacity += n
    lastArr = TDS.Array struct, n
+   lastArrLen = n
    lastViews = lastArr.views
    arrays.push lastArr
    allViews.push lastViews
