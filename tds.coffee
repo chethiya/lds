@@ -20,7 +20,18 @@ TypeLenghts = [
 ]
 
 names = {}
-namesCnt = 0
+namesCnt = 1
+
+STRING_ID = 0
+STRING_AVG_LEN = 5
+
+INT_SIZE = 16
+MAX_SIZE = 1<<26
+MAX_LINEAR_ARRAY_INDEX = 2
+
+ITER_CHANGE_VIEW = 1
+ITER_SUCCESS = 0
+ITER_FAIL = -1
 
 Struct = ->
  id = null
@@ -132,84 +143,156 @@ Struct = ->
  Class.Object = RawObject
  Class
 
+Struct.String =
+ id: STRING_ID
+
 Array = (struct, length) ->
  views = null
- class Class
-  constructor: ->
-   @struct = struct
-   @length = length
-   @buffer = new ArrayBuffer struct.bytes * length
-   views = @views = []
-   for t, i in struct.types
-    @views.push new ArrayTypes[t] @buffer,
-     struct.offsets[i] * length
-     length
+ buffers = null
+ viewLens = []
 
-  #functions for Struct instance
-  begin: -> @get 0
+ lastView = null
+ lastViewLen = 0
+ i_lastView = i_lastPos = 0
 
-  end: -> @get length-1
+ i_view = i_pos = i_len = null
 
-  get: (i) ->
-   if i < 0 or i >= length
-    null
-   new struct null, views, i
+ if struct.id is STRING_ID
+  class StringArrayClass
+   constructor: ->
+    size = INT_SIZE
+    n = length * STRING_AVG_LEN
+    while size isnt MAX_SIZE and size < n
+     size = size << 1
+    buffers = [new ArrayBuffer size << 1]
+    views = [new Int16Array buffers[0]]
+    viewLens = [size]
 
-  set: (i, val) ->
-   if i < 0 or i >= length
-    return off
-   if struct.id isnt val.id
-    return off
+    lastView = views[0]
+    lastViewLen = size
 
-   for j in [0...struct.n]
-    views[j][i] = val.views[j][val.pos]
-   return on
+    i_view = new Int32Array new ArrayBuffer length * 4
+    i_pos = new Int32Array new ArrayBuffer length * 4
+    i_len = new Int32Array new ArrayBuffer length * 4
+    for i in [0...length]
+     i_len[i] = -1
+
+    @length = length
+
+   addArray: ->
+    size = lastViewLen
+    while size isnt MAX_SIZE
+     size = size << 1
+    b = new ArrayBuffer size << 1
+    buffers.push b
+    lastView = new Int16Array b
+    views.push lastView
+    viewLens.push size
+    lastViewLen = size
+
+    i_lastView++
+    i_lastPos = 0
+
+   set: (p, str) ->
+    if i_lastPos is lastViewLen
+     @addArray()
+    startPos = i_lastPos
+    startView = i_lastView
+    for i in [0...str.length]
+     if i_lastPos is lastViewLen
+      @addArray()
+     lastView[i_lastPos] = str.charCodeAt i
+     #console.log lastView[i_lastPos]
+     i_lastPos++
+
+    i_view[p] = startView
+    i_pos[p] = startPos
+    i_len[p] = str.length
+
+   get: (p) ->
+    v = i_view[p]
+    i = i_pos[p]
+    l = i_len[p]
+    str = ""
+    for j in [0...l]
+     if i is viewLens[v]
+      i = 0
+      v++
+     str += String.fromCharCode views[v][i]
+     #console.log views[v][i], String.fromCharCode views[v][i]
+     ++i
+    str
+
+   lastView: -> lastView
+
+  new StringArrayClass
+ else
+  class Class
+   constructor: ->
+    @struct = struct
+    @length = length
+    @buffer = new ArrayBuffer struct.bytes * length
+    views = @views = []
+    for t, i in struct.types
+     @views.push new ArrayTypes[t] @buffer,
+      struct.offsets[i] * length
+      length
+
+   #functions for Struct instance
+   begin: -> @get 0
+
+   end: -> @get length-1
+
+   get: (i) ->
+    if i < 0 or i >= length
+     null
+    new struct null, views, i
+
+   set: (i, val) ->
+    if i < 0 or i >= length
+     return off
+    if struct.id isnt val.id
+     return off
+
+    for j in [0...struct.n]
+     views[j][i] = val.views[j][val.pos]
+    return on
 
 
-  #functions for objects
-  get_object: (p) ->
-   o = new struct.Object()
-   for k, i in struct.keys
-    o[k] = views[i][p]
-   o
-
-  set_object: (p, obj) ->
-   if obj?
+   #functions for objects
+   get_object: (p) ->
+    o = new struct.Object()
     for k, i in struct.keys
-     if obj[k]?
-      views[i][p] = obj[k]
-   null
+     o[k] = views[i][p]
+    o
 
-
-  set_prop: (p, i, v) ->
-   views[i][p] = v
-   null
-
-  get_prop: (p, i) -> views[i][p]
-
-  get_views: -> views
-
- #functions for individual getters and setters
- for k, i in struct.titleKeys
-  do (i) ->
-   Class.prototype["set#{k}"] = (p, val) ->
-    views[i][p] = val
+   set_object: (p, obj) ->
+    if obj?
+     for k, i in struct.keys
+      if obj[k]?
+       views[i][p] = obj[k]
     null
 
-   Class.prototype["get#{k}"] = (p) ->
-    views[i][p]
 
- new Class()
+   set_prop: (p, i, v) ->
+    views[i][p] = v
+    null
 
+   get_prop: (p, i) -> views[i][p]
 
-INT_SIZE = 16
-MAX_SIZE = 1<<26
-MAX_LINEAR_ARRAY_INDEX = 2
+   get_views: -> views
 
-ITER_CHANGE_VIEW = 1
-ITER_SUCCESS = 0
-ITER_FAIL = -1
+  #functions for individual getters and setters
+  for k, i in struct.titleKeys
+   do (i) ->
+    Class.prototype["set#{k}"] = (p, val) ->
+     views[i][p] = val
+     null
 
+    Class.prototype["get#{k}"] = (p) ->
+     views[i][p]
+
+  new Class()
 
 ArrayList = (struct, start_size, min_capacity) ->
  arrays = null
