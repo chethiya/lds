@@ -194,6 +194,9 @@ Array = (struct, length) ->
     i_lastPos = 0
 
    set: (p, str) ->
+    if str is null
+     i_len[p] = -1
+     return
     if i_lastPos is lastViewLen
      @addArray()
     startPos = i_lastPos
@@ -213,6 +216,8 @@ Array = (struct, length) ->
     v = i_view[p]
     i = i_pos[p]
     l = i_len[p]
+    if l is -1
+     null
     str = ""
     for j in [0...l]
      if i is viewLens[v]
