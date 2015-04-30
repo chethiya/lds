@@ -27,6 +27,7 @@ STRING_AVG_LEN = 5
 
 INT_SIZE = 16
 MAX_SIZE = 1<<26
+MAX_BYTES = 1<<29
 MAX_LINEAR_ARRAY_INDEX = 2
 
 ITER_CHANGE_VIEW = 1
@@ -162,7 +163,8 @@ Array = (struct, length) ->
    constructor: ->
     size = INT_SIZE
     n = length * STRING_AVG_LEN
-    while size isnt MAX_SIZE and size < n
+    while size isnt MAX_SIZE and size < n and
+    size * 2 * 2 <= MAX_BYTES
      size = size << 1
     buffers = [new ArrayBuffer size << 1]
     views = [new Int16Array buffers[0]]
@@ -181,7 +183,8 @@ Array = (struct, length) ->
 
    addArray: ->
     size = lastViewLen
-    while size isnt MAX_SIZE
+    while size isnt MAX_SIZE and
+    size * 2 * 2 <= MAX_BYTES
      size = size << 1
     b = new ArrayBuffer size << 1
     buffers.push b
@@ -456,7 +459,8 @@ ArrayList = (struct, start_size, min_capacity) ->
     length = @length = start_size
     n = start_size
     size = INT_SIZE
-    while size isnt MAX_SIZE and n > size
+    while size isnt MAX_SIZE and n > size and
+    size * 2 * struct.bytes <= MAX_BYTES
      size = size << 1
 
     ls = 0
@@ -477,12 +481,14 @@ ArrayList = (struct, start_size, min_capacity) ->
       break
 
      n -= size
-     if size isnt MAX_SIZE
+     if size isnt MAX_SIZE and
+     size * 2 * struct.bytes <= MAX_BYTES
       size = size << 1
    else
     capacity = INT_SIZE
     if min_capacity?
-     while capacity isnt MAX_SIZE and capacity < min_capacity
+     while capacity isnt MAX_SIZE and capacity < min_capacity and
+     capacity * 2 * struct.bytes <= MAX_BYTES
       capacity = capacity << 1
     size = capacity
     lastArr = TDS.Array struct, capacity
@@ -583,7 +589,8 @@ ArrayList = (struct, start_size, min_capacity) ->
 
   addArray: ->
    n = lastArrLen
-   if n isnt MAX_SIZE
+   if n isnt MAX_SIZE and
+   n * 2 * struct.bytes <= MAX_BYTES
     n = n << 1
 
    capacity += n
