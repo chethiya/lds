@@ -192,6 +192,7 @@ Array = (struct, length) ->
 
     i_lastView++
     i_lastPos = 0
+    return
 
    set: (p, str) ->
     if str is null
@@ -211,13 +212,14 @@ Array = (struct, length) ->
     i_view[p] = startView
     i_pos[p] = startPos
     i_len[p] = str.length
+    return
 
    get: (p) ->
     v = i_view[p]
     i = i_pos[p]
     l = i_len[p]
     if l is -1
-     null
+     return null
     str = ""
     for j in [0...l]
      if i is viewLens[v]
