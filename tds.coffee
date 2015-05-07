@@ -240,11 +240,11 @@ Struct = ->
     @views = views
     @pos = pos
    else
-    buffer = new ArrayBuffer bytes
     @pos = 0
     @views = []
     for t, i in types
-     @views.push new TypeArrays[t][0] buffer, offsets[i], TypeArrays[t][1]
+     buffer = new ArrayBuffer TypeLenghts[t] * lengths[i]
+     @views.push new TypeArrays[t][0] buffer
    if obj?
     @set obj
 
