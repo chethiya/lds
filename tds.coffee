@@ -301,12 +301,12 @@ Struct = ->
       s = new StringClass null,
        @views[i][k1 + j*2]
        @views[i][k1 + j*2 + 1]
-      res.push s.toString()
+      res[j] = s.toString()
       s.release()
     else
      k1 = @pos*lengths[i]
      for j in [0...lengths[i]]
-      res.push @views[i][k1 + j]
+      res[j] = @views[i][k1 + j]
    res
 
   copyFrom: (struct) ->
