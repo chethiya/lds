@@ -368,9 +368,35 @@ Struct = ->
  StructClass.Object = RawObject
  StructClass
 
+
+TDSArray = (struct, length) ->
+ views = null
+
+ class ArrayClass
+  constructor: ->
+   @struct = struct
+   @length = length
+   views = []
+   for t, i in struct.types
+    buffer = new ArrayBuffer TypeLenghts[t] * struct.lengths[i] * length
+    views.push new TypeArrays[t][0] buffer
+
+  get: (i, structIns) ->
+   if structIns?
+    structIns.views = views
+    structIns.pos = i
+   else
+    structIns = new struct null, views, i
+   structIns
+
+  getViews: -> views
+
+ new ArrayClass
+
 TDS =
  Types: Types
  Struct: Struct
+ Array: TDSArray
 
 if GLOBAL?
  module.exports = TDS
