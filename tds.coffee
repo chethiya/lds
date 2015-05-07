@@ -97,9 +97,9 @@ StringAlloc = ->
 
  addView = ->
   size = lastViewLen
-  while size * 4 * 2 <= MAX_BYTES
+  while size * 16 * 2 <= MAX_BYTES
    size = size << 1
-  buffer = new ArrayBuffer size
+  buffer = new ArrayBuffer size * 16
   lastView = new Array 4
   views.push lastView
   for i in [0...4]
