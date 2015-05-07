@@ -12,4 +12,5 @@ p = new Person
 p.setName 'asdf'
 p.setAge 23
 p.setValues [1, 2, 3]
+p.setAddress ["No. 123", "Street 1", "Street 2", ""]
 console.log p.get()

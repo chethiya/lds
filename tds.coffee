@@ -73,6 +73,9 @@ StringAlloc = ->
  lastView = views[0]
  lastViewLen = size
 
+ views[0][0][0] = -1
+ i_lViewPos = 1
+
  create = (str) ->
   if i_lViewPos is lastViewLen
    addView()
@@ -139,7 +142,7 @@ StringAlloc = ->
     (x is i_lView and y >= i_lViewPos)
      throw new Error Strings.INVALID_STRING_REF
     ###
-    @x = y
+    @x = x
     @y = y
     retain x, y
 
@@ -150,6 +153,8 @@ StringAlloc = ->
 
   toString: ->
    len = views[@x][0][@y]
+   if len is -1
+    return null
    c = views[@x][1][@y]
    p = views[@x][2][@y]
    char = chars[c]
