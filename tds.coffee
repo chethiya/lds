@@ -149,6 +149,9 @@ StringAlloc = ->
   release: ->
    release @x, @y
 
+  retain: ->
+   retain @x, @y
+
   hash: ->
 
   toString: ->
@@ -266,52 +269,89 @@ Struct = ->
     o[k] = @get_prop i
    o
 
-  set_prop: (i, v) ->
+  set_prop: (v, i, j, string_ref) ->
    if types[i] is Types.String
     if lengths[i] is 1
-     s = new StringClass v
+     if string_ref is on
+      s = v
+      s.retain()
+     else
+      s = new StringClass v
      @views[i][@pos*2] = s.x
      @views[i][@pos*2+1] = s.y
     else
-     l = Math.min lengths[i], v.length
      k1 = @pos*lengths[i]*2
-     for j in [0...l]
-      s = new StringClass v[j]
+     if j?
+      if string_ref is on
+       s = v
+       s.retain()
+      else
+       s = new StringClass v
       @views[i][k1 + j*2] = s.x
       @views[i][k1 + j*2 + 1] = s.y
+     else
+      l = Math.min lengths[i], v.length
+      for j in [0...l]
+       if string_ref is on
+        s = v
+        s.retain()
+       else
+        s = new StringClass v[j]
+       @views[i][k1 + j*2] = s.x
+       @views[i][k1 + j*2 + 1] = s.y
    else
     if lengths[i] is 1
      @views[i][@pos] = v
     else
-     l = Math.min lengths[i], v.length
      k1 = @pos*lengths[i]
-     for j in [0...l]
-      @views[i][k1 + j] = v[j]
+     if j?
+      @views[i][k1 + j] = v
+     else
+      l = Math.min lengths[i], v.length
+      for j in [0...l]
+       @views[i][k1 + j] = v[j]
    return
 
-  get_prop: (i) ->
+  get_prop: (i, j, string_ref) ->
    res = null
    if lengths[i] is 1
     if types[i] is Types.String
      s = new StringClass null, @views[i][@pos*2], @views[i][@pos*2+1]
-     res = s.toString()
-     s.release()
+     if string_ref is on
+      res = s
+     else
+      res = s.toString()
+      s.release()
     else
      res = @views[i][@pos]
    else
-    res = new Array lengths[i]
-    if types[i] is Types.String
-     k1 = @pos*lengths[i]*2
-     for j in [0...lengths[i]]
-      s = new StringClass null,
-       @views[i][k1 + j*2]
-       @views[i][k1 + j*2 + 1]
-      res[j] = s.toString()
-      s.release()
+    if j?
+     if types[i] is Types.String
+      k1 = @pos*lengths[i]*2
+      s = new StringClass null, @views[i][k1 + j*2], @views[i][k1 + j*2 + 1]
+      if string_ref is on
+       res = s
+      else
+       res = s.toString()
+       s.release()
+     else
+      k1 = @pos * lengths[i]
+      res = @views[i][k1 + j]
     else
-     k1 = @pos*lengths[i]
-     for j in [0...lengths[i]]
-      res[j] = @views[i][k1 + j]
+     res = new Array lengths[i]
+     if types[i] is Types.String
+      k1 = @pos*lengths[i]*2
+      for j in [0...lengths[i]]
+       s = new StringClass null, @views[i][k1 + j*2], @views[i][k1 + j*2 + 1]
+       if string_ref is on
+        res[j] = s
+       else
+        res[j] = s.toString()
+        s.release()
+     else
+      k1 = @pos*lengths[i]
+      for j in [0...lengths[i]]
+       res[j] = @views[i][k1 + j]
    res
 
   copyFrom: (struct) ->
@@ -350,11 +390,11 @@ Struct = ->
    tcase = (k.substr 0, 1).toUpperCase() + k.substr 1
   titleCasePropperties.push tcase
   do (i) ->
-   StructClass.prototype["set#{tcase}"] = (val) ->
-    @set_prop i, val
+   StructClass.prototype["set#{tcase}"] = (val, j, string_ref) ->
+    @set_prop val, i, j, string_ref
 
-   StructClass.prototype["get#{tcase}"] = ->
-    @get_prop i
+   StructClass.prototype["get#{tcase}"] = (j, string_ref) ->
+    @get_prop i, j, string_ref
 
  StructClass.id = id
  StructClass.name = name
@@ -397,6 +437,7 @@ TDS =
  Types: Types
  Struct: Struct
  Array: TDSArray
+ String: StringClass
 
 if GLOBAL?
  module.exports = TDS

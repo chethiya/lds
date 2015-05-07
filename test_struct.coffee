@@ -13,7 +13,16 @@ p.setName 'asdf'
 p.setAge 23
 p.setValues [1, 2, 3]
 p.setAddress ["No. 123", "Street 1", "Street 2", ""]
+p.setAddress "3 - thrid", 3
+str = new TDS.String "4-fourth"
+p.setAddress str, 4, on
+str.release()
+
 console.log p.get()
+console.log p.getAddress 2
+str = p.getAddress 0, on
+console.log str.toString()
+str.release()
 
 p2 = new Person
 p2.copyFrom p
@@ -47,8 +56,9 @@ test_array = (n) ->
  for i in [0...n]
   instance.copyFrom p2
   for j in [0...5]
-   arr[j] = "#{i}-#{j}"
-  instance.setAddress arr
+   #arr[j] = "#{i}-#{j}"
+   instance.setAddress "#{i}-#{j}", j
+  #instance.setAddress arr
   instance.next()
  console.timeEnd 'time_array'
 
@@ -87,4 +97,4 @@ run = (n) ->
  #test_struct n
  #test_js n
 
-run 10000000
+run 1000000
