@@ -242,14 +242,16 @@ Struct = ->
      this[k] = new Array lengths[i]
 
  class StructClass
-  constructor: (obj, views, pos) ->
+  constructor: (obj, views, pos, viewLen) ->
    @id = id
    if views?
     @views = views
     @pos = pos
+    @viewLen = viewLen
    else
     @pos = 0
     @views = []
+    @viewLen = 1
     for t, i in types
      buffer = new ArrayBuffer TypeLenghts[t] * lengths[i]
      @views.push new TypeArrays[t][0] buffer
@@ -369,7 +371,7 @@ Struct = ->
    return true
 
   next: ->
-   if @pos < @views[0].length-1
+   if @pos < @viewLen-1
     @pos++
     return on
    else
@@ -426,18 +428,67 @@ TDSArray = (struct, length) ->
     structIns.views = views
     structIns.pos = i
    else
-    structIns = new struct null, views, i
+    structIns = new struct null, views, i, length
    structIns
 
   getViews: -> views
 
  new ArrayClass
 
+
+ArrayList = (struct, start_size, capacity) ->
+ arrays = null
+ length = 0
+ lastArr = null
+ i_lArr = i_lArrPos = 0
+
+ class ArrayListClass
+  constructor: ->
+   arrays = @arrays = []
+   @struct = struct
+
+   length = 0
+   while true
+    lastArr = TDSArray struct, capacity
+    arrays.push lastArr
+    if length + capacity >= start_size
+     i_lArrPos = start_size - length
+     length = @length = start_size
+     break
+    else
+     i_lArr++
+     length += capacity
+
+  get: (p, structIns) ->
+   if p < 0 or p >= length
+    return null
+   x = parseInt p / capacity
+   y = p % capacity
+   return arrays[x].get y, structIns
+
+  add: (structIns) ->
+   if i_lArrPos is capacity
+    @addArray()
+
+   @length++
+   length++
+   return lastArr.get i_lArrPos++, structIns
+
+  addArray: ->
+   lastArr = TDS.Array struct, capacity
+   arrays.push lastArr
+   i_lArr++
+   i_lArrPos = 0
+
+ new ArrayListClass
+
+
 TDS =
  Types: Types
  Struct: Struct
- Array: TDSArray
  String: StringClass
+ Array: TDSArray
+ ArrayList: ArrayList
 
 if GLOBAL?
  module.exports = TDS
