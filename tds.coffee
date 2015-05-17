@@ -42,7 +42,7 @@ Strings =
   "No properties in the struct #{name}"
  INVALID_STRING: "Invalid String"
 
-
+#TODO cleanup method to garbage collect
 StringAlloc = ->
  chars = []
  charLens = []
@@ -129,6 +129,8 @@ StringAlloc = ->
  release = (x, y) ->
   views[x][3][y]--
 
+ B = 8191 #  is 1<<13  -  1
+ M = 536870909 # < 1<<29
  class StringClass
   constructor: (str, x, y) ->
    @x = @y = -1
@@ -153,6 +155,59 @@ StringAlloc = ->
    retain @x, @y
 
   hash: ->
+   len = views[@x][0][@y]
+   if len is -1
+    return 0
+   c = views[@x][1][@y]
+   p = views[@x][2][@y]
+   char = chars[c]
+   clen = charLens[c]
+   str = ""
+   res = 0
+   b = 1
+   for i in [0...len]
+    res = (b * char[p] + res) % M  # 2^13 * 2^16 + 2^29
+    b = (b * B) % M
+    p++
+    if p is clen
+     c++
+     char = chars[c]
+     clen = charLens[c]
+     p = 0
+   return res
+
+  equals: (s) ->
+   l1 = views[@x][0][@y]
+   l2 = views[s.x][0][s.y]
+   if l1 isnt l2
+    return off
+   else if l1 is -1
+    return on
+
+   c1 = views[@x][1][@y]
+   p1 = views[@x][2][@y]
+   c2 = views[s.x][1][s.y]
+   p2 = views[s.x][2][s.y]
+   char1 = chars[c1]
+   char2 = chars[c2]
+   clen1 = charLens[c1]
+   clen2 = charLens[c2]
+   for i in [0...l1]
+    if char1[p1] isnt char2[p2]
+     return off
+    p1++
+    p2++
+    if p1 is clen1
+     c1++
+     p1 = 0
+     char1 = chars[c1]
+     clen1 = charLens[c1]
+    if p2 is clen2
+     c2++
+     p2 = 0
+     char2 = chars[c2]
+     clen2 = charLens[c2]
+   return on
 
   toString: ->
    len = views[@x][0][@y]
@@ -193,6 +248,9 @@ Person = TDS.Struct "Person",
 p = new Person()
 console.log p.get()
 ###
+
+#TODO release when structs are replaced.
+#TODO check memory leaks
 
 Struct = ->
  id = null
@@ -436,6 +494,7 @@ TDSArray = (struct, length) ->
  new ArrayClass
 
 
+#TODO get rid of capacity
 ArrayList = (struct, start_size, capacity) ->
  arrays = null
  length = 0
@@ -462,7 +521,7 @@ ArrayList = (struct, start_size, capacity) ->
   get: (p, structIns) ->
    if p < 0 or p >= length
     return null
-   x = parseInt p / capacity
+   x = Math.floor p / capacity
    y = p % capacity
    return arrays[x].get y, structIns
 
@@ -482,6 +541,109 @@ ArrayList = (struct, start_size, capacity) ->
 
  new ArrayListClass
 
+HashtableBase = (size, val_type) ->
+ ListTerminal = Struct "__ListTerminal__",
+  {property: 'start', type: Types.Float64}
+  {property: 'end', type: Types.Float64}
+ val_type ?= Types.Int32
+ ItemType = Struct '__ItemType__',
+  {property: 'key', type: Types.String}
+  {property: 'hash', type: Types.Int32}
+  {property: 'val', type: val_type}
+  {property: 'next', type: Types.Float64}
+
+ lists = new ArrayList ListTerminal, size, (Math.min size, 1<<20)
+ items = new ArrayList ItemType, null, 1<<20
+ li = ii = null
+ class HashtableBaseClass
+  constructor: ->
+   li = lists.get 0
+   for i in [0...size]
+    li.setStart -1
+    li.setEnd -1
+    if not li.next()
+     li = lists.get i+1, li
+
+  set: (key, val, string_ref) ->
+   #console.log 'adding', key, val
+   if string_ref
+    s = key
+    s.retain()
+   else
+    s = new StringClass key
+   hash = s.hash()
+   #console.log "hash: #{hash}"
+   pos = hash % size
+   li = lists.get pos, li
+   end = li.getEnd()
+
+   if end is -1
+    li.setStart items.length
+    li.setEnd items.length
+    @_addItem s, hash, val
+   else
+    start = li.getStart()
+    while start != -1
+     ii = items.get start, ii
+     if ii.getHash() is hash
+      ss = ii.getKey null, on
+      if ss.equals s
+       ss.release()
+       ii.setVal val
+       break
+      ss.release()
+     start = ii.getNext()
+    if start is -1
+     ii.setNext items.length
+     li.setEnd items.length
+     @_addItem s, hash, val
+   s.release()
+   return
+
+  _addItem: (s, hash, val) ->
+   ii = items.add ii
+   ii.setKey s, null, on
+   ii.setHash hash
+   ii.setVal val
+   ii.setNext -1
+   return
+
+  get: (key, string_ref) ->
+   if string_ref
+    s = key
+    s.retain()
+   else
+    s = new StringClass key
+   hash = s.hash()
+   pos = hash % size
+   li = lists.get pos, li
+
+   start = li.getStart()
+   res = null
+   while start != -1
+    ii = items.get start, ii
+    if ii.getHash() is hash
+     ss = ii.getKey null, on
+     if ss.equals s
+      ss.release()
+      res = ii.getVal()
+      break
+     ss.release()
+    start = ii.getNext()
+   s.release()
+   return res
+
+  summarize: ->
+   li = lists.get 0, li
+   cnt = 0
+   for i in [0...size]
+    if li.getStart() is -1
+     cnt++
+    if not li.next()
+     li = lists.get i+1, li
+   console.log 'summarry'
+   console.log "lists with no items: #{cnt} out of #{size}"
+ new HashtableBaseClass
 
 TDS =
  Types: Types
@@ -489,6 +651,7 @@ TDS =
  String: StringClass
  Array: TDSArray
  ArrayList: ArrayList
+ HashtableBase: HashtableBase
 
 if GLOBAL?
  module.exports = TDS
