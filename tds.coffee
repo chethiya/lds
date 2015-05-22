@@ -127,7 +127,10 @@ StringAlloc = ->
   views[x][3][y]++
 
  release = (x, y) ->
+  if x is 0 and y is 0
+   return
   views[x][3][y]--
+  return
 
  B = 8191 #  is 1<<13  -  1
  M = 536870909 # < 1<<29
@@ -249,7 +252,6 @@ p = new Person()
 console.log p.get()
 ###
 
-#TODO release when structs are replaced.
 #TODO check memory leaks
 
 Struct = ->
@@ -340,6 +342,7 @@ Struct = ->
       s.retain()
      else
       s = new StringClass v
+     StringAlloc.release @views[i][@pos*2], @views[i][@pos*2+1]
      @views[i][@pos*2] = s.x
      @views[i][@pos*2+1] = s.y
     else
@@ -350,6 +353,7 @@ Struct = ->
        s.retain()
       else
        s = new StringClass v
+      StringAlloc.release @views[i][k1 + j*2], @views[i][k1 + j*2 + 1]
       @views[i][k1 + j*2] = s.x
       @views[i][k1 + j*2 + 1] = s.y
      else
@@ -360,6 +364,7 @@ Struct = ->
         s.retain()
        else
         s = new StringClass v[j]
+       StringAlloc.release @views[i][k1 + j*2], @views[i][k1 + j*2 + 1]
        @views[i][k1 + j*2] = s.x
        @views[i][k1 + j*2 + 1] = s.y
    else
@@ -495,6 +500,16 @@ TDSArray = (struct, length) ->
 
   getViews: -> views
 
+  release: ->
+   for t, i in struct.types
+    if t is Types.String
+     k1 = struct.lengths[i] * TypeArrays[t][1]
+     k2 = TypeArrays[t][1]
+     for j in [0...lengths[i]]
+      p = @pos * k1 + j * k2
+      StringAlloc.release @views[i][p], @views[i][p+1]
+   return
+
  new ArrayClass
 
 
@@ -560,6 +575,7 @@ ArrayList = (struct, start_size) ->
       tarViews[j][i] = views[j][i]
     tarViews = null
     views = null
+    arrays[0].release()
     arrays[0] = lastArr
     i_lArrPos = size
     size = size << 1
