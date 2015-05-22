@@ -34,7 +34,7 @@ STRING_ID = 0
 INT_SIZE = 16
 MAX_SIZE = 1<<26
 MAX_BYTES = 1<<29
-
+MAX_BYTES_POW = 29
 
 Strings =
  INVALID_STRING_REF: "Invalid String reference"
@@ -262,6 +262,7 @@ Struct = ->
  offsets = []
  n = 0
  bytes = 0
+ maxBytesPerProp = 0
 
  if typeof arguments[0] isnt 'string' or arguments[0].length is 0
   throw new Error 'No name for the struct'
@@ -283,9 +284,11 @@ Struct = ->
    (v.length > 0) and (v.length is parseInt v.length)
     lengths.push v.length
     bytes += TypeLenghts[v.type] * v.length
+    maxBytesPerProp = Math.max maxBytesPerProp, TypeLenghts[v.type] * v.length
    else
     lengths.push 1
     bytes += TypeLenghts[v.type]
+    maxBytesPerProp = Math.max maxBytesPerProp, TypeLenghts[v.type]
    n++
 
  if n is 0
@@ -465,6 +468,7 @@ Struct = ->
  StructClass.offsets = offsets
  StructClass.n = n
  StructClass.bytes = bytes
+ StructClass.maxBytesPerProp = maxBytesPerProp
  StructClass.Object = RawObject
  StructClass
 
@@ -494,39 +498,52 @@ TDSArray = (struct, length) ->
  new ArrayClass
 
 
-#TODO get rid of capacity
-ArrayList = (struct, start_size, capacity) ->
+ArrayList = (struct, start_size) ->
  arrays = null
  length = 0
  lastArr = null
  i_lArr = i_lArrPos = 0
 
+ size = null
+ max_size = Math.floor MAX_BYTES / struct.maxBytesPerProp
+ t = 0
+ for i in [0..MAX_BYTES_POW]
+  if max_size & (1<<i) isnt 0
+   t = i
+ max_size = 1<<t
+ t = null
+
  class ArrayListClass
   constructor: ->
    arrays = @arrays = []
    @struct = struct
+   start_size ?= 0
+
+   size = INT_SIZE
+   while size < start_size and (size << 1) <= max_size
+    size = size << 1
 
    length = 0
    while true
-    lastArr = TDSArray struct, capacity
+    lastArr = TDSArray struct, size
     arrays.push lastArr
-    if length + capacity >= start_size
+    if length + size >= start_size
      i_lArrPos = start_size - length
      length = @length = start_size
      break
     else
      i_lArr++
-     length += capacity
+     length += size
 
   get: (p, structIns) ->
    if p < 0 or p >= length
     return null
-   x = Math.floor p / capacity
-   y = p % capacity
+   x = Math.floor p / size
+   y = p % size
    return arrays[x].get y, structIns
 
   add: (structIns) ->
-   if i_lArrPos is capacity
+   if i_lArrPos is size
     @addArray()
 
    @length++
@@ -534,10 +551,23 @@ ArrayList = (struct, start_size, capacity) ->
    return lastArr.get i_lArrPos++, structIns
 
   addArray: ->
-   lastArr = TDS.Array struct, capacity
-   arrays.push lastArr
-   i_lArr++
-   i_lArrPos = 0
+   if size < max_size
+    views = lastArr.getViews()
+    lastArr = TDS.Array struct, size<<1
+    tarViews = lastArr.getViews()
+    for j in [0...views.length]
+     for i in [0...size]
+      tarViews[j][i] = views[j][i]
+    tarViews = null
+    views = null
+    arrays[0] = lastArr
+    i_lArrPos = size
+    size = size << 1
+   else
+    lastArr = TDS.Array struct, size
+    arrays.push lastArr
+    i_lArr++
+    i_lArrPos = 0
 
  new ArrayListClass
 

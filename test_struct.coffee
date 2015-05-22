@@ -71,7 +71,7 @@ test_array = (n) ->
 test_arraylist = (n) ->
  console.time 'time_arraylist'
  arr = new Array 5
- people = new TDS.ArrayList Person, n, Math.min n, 1<<20
+ people = new TDS.ArrayList Person, n
  instance = people.get 0
  for i in [0...n]
   instance.copyFrom p2
@@ -83,6 +83,27 @@ test_arraylist = (n) ->
   if not instance.next()
    instance = people.get i+1, instance
  console.timeEnd 'time_arraylist'
+
+ console.log 'created'
+
+ for i in [0...10]
+  p = (Math.floor Math.random()*n) % n
+  console.log p, (people.get p, instance).getAddress()
+
+
+test_arraylist_add = (n) ->
+ console.time 'time_arraylist_add'
+ arr = new Array 5
+ people = new TDS.ArrayList Person
+ for i in [0...n]
+  instance = people.add instance
+  instance.copyFrom p2
+
+  for j in [0...5]
+   #arr[j] = "#{i}-#{j}"
+   instance.setAddress "#{i}-#{j}", j
+  #instance.setAddress arr
+ console.timeEnd 'time_arraylist_add'
 
  console.log 'created'
 
@@ -117,7 +138,8 @@ test_js = (n) ->
 run = (n) ->
  #test_array n
  #test_struct n
- #test_js n
+ test_js n
  test_arraylist n
+ test_arraylist_add n
 
-run 10000000
+run 30
