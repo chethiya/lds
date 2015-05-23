@@ -32,17 +32,14 @@ namesCnt = 1
 STRING_ID = 0
 
 INT_SIZE = 16
-MAX_SIZE = 1<<26
 MAX_BYTES = 1<<29
 MAX_BYTES_POW = 29
 
 Strings =
- INVALID_STRING_REF: "Invalid String reference"
  NO_PROPERTIES: (name) ->
   "No properties in the struct #{name}"
- INVALID_STRING: "Invalid String"
 
-#TODO cleanup method to garbage collect
+#TODO cleanup() method to garbage collect
 StringAlloc = ->
  chars = []
  charLens = []
@@ -91,9 +88,10 @@ StringAlloc = ->
    if i_lCharPos is lastCharLen
     addChar()
    lastChar[i_lCharPos++] = str.charCodeAt i
-  view = i_lView
+  view = i_lView #these two variables are used outside after calling create()
   viewPos = i_lViewPos
   i_lViewPos++
+  return
 
  addView = ->
   size = lastViewLen
@@ -141,15 +139,14 @@ StringAlloc = ->
     create str
     @x = view
     @y = viewPos
+   else if not x?
+    @x = @y = 0
+    retain 0, 0
    else
-    ###
-    if x < 0 or x > i_lView or y < 0 or y >= viewLens[x] or
-    (x is i_lView and y >= i_lViewPos)
-     throw new Error Strings.INVALID_STRING_REF
-    ###
     @x = x
     @y = y
     retain x, y
+   return
 
   release: ->
    release @x, @y
@@ -251,8 +248,6 @@ Person = TDS.Struct "Person",
 p = new Person()
 console.log p.get()
 ###
-
-#TODO check memory leaks
 
 Struct = ->
  id = null
@@ -559,13 +554,13 @@ ArrayList = (struct, start_size) ->
 
   add: (structIns) ->
    if i_lArrPos is size
-    @addArray()
+    @_addArray()
 
    @length++
    length++
    return lastArr.get i_lArrPos++, structIns
 
-  addArray: ->
+  _addArray: ->
    if size < max_size
     views = lastArr.getViews()
     lastArr = TDS.Array struct, size<<1
@@ -587,6 +582,7 @@ ArrayList = (struct, start_size) ->
 
  new ArrayListClass
 
+#TODO remove() method to remove a key-val pair
 HashtableBase = (size, val_type) ->
  ListTerminal = Struct "__ListTerminal__",
   {property: 'start', type: Types.Float64}
@@ -598,8 +594,8 @@ HashtableBase = (size, val_type) ->
   {property: 'val', type: val_type}
   {property: 'next', type: Types.Float64}
 
- lists = new ArrayList ListTerminal, size, (Math.min size, 1<<20)
- items = new ArrayList ItemType, null, 1<<20
+ lists = new ArrayList ListTerminal, size
+ items = new ArrayList ItemType, null
  li = ii = null
  class HashtableBaseClass
   constructor: ->
