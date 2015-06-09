@@ -598,9 +598,10 @@ TDSArray = (struct, length) ->
     if t is Types.String
      k1 = struct.lengths[i] * TypeArrays[t][1]
      k2 = TypeArrays[t][1]
-     for j in [0...lengths[i]]
-      p = @pos * k1 + j * k2
-      StringAlloc.release @views[i][p], @views[i][p+1]
+     pos = i * k1
+     for j in [0...struct.lengths[i]]
+      p = pos + j * k2
+      StringAlloc.release views[i][p], views[i][p+1]
    return
 
  new ArrayClass
@@ -616,7 +617,7 @@ ArrayList = (struct, start_size) ->
  max_size = Math.floor MAX_BYTES / struct.maxBytesPerProp
  t = 0
  for i in [0..MAX_BYTES_POW]
-  if max_size & (1<<i) isnt 0
+  if (max_size & (1<<i)) > 0
    t = i
  max_size = 1<<t
  t = null
