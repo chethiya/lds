@@ -53,6 +53,7 @@ run = (n) ->
  test_js n
  test_tds n
  test_tds n
+ TDS.cleanup()
 
 run 1000
 

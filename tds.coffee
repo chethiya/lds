@@ -201,29 +201,23 @@ StringAlloc = ->
     y++
     yy++
 
-  if i_lView > xx
-   for cnt in [i_lView..xx+1]
-    if views[cnt]?
-     delete views[cnt]
   console.log 'Cleanup report'
+  if i_lView > xx
+   views.splice xx+1
+   viewLens.splice xx+1
   console.log "new view: (#{xx}, #{yy}) old view: (#{i_lView}, #{i_lViewPos})"
   i_lView = xx
   i_lViewPos = yy
   lastView = views[xx]
-  if not lastView?
-   lastView = views[xx-1]
-  lastViewLen = lastView.length
+  lastViewLen = lastView[0].length
 
   if i_lChar > ii
-   for cnt in [i_lChar..ii+1]
-    if chars[cnt]?
-     delete chars[cnt]
+   chars.splice ii+1
+   charLens.splice ii+1
   console.log "new char: (#{ii}, #{jj}) old char: (#{i_lChar}, #{i_lCharPos})"
   i_lChar = ii
   i_lCharPos = jj
   lastChar = chars[ii]
-  if not lastChar?
-   lastChar = chars[ii-1]
   lastCharLen = lastChar.length
 
   console.log "Garbage collection done"
@@ -686,17 +680,24 @@ ArrayList = (struct, start_size) ->
 
  new ArrayListClass
 
-#TODO remove() method to remove a key-val pair
-HashtableBase = (size, val_type) ->
- ListTerminal = Struct "__ListTerminal__",
+HashtableListTerminal = Struct "__ListTerminal__",
   {property: 'start', type: Types.Float64}
   {property: 'end', type: Types.Float64}
+
+HashtableItemTypes = {}
+
+#TODO remove() method to remove a key-val pair
+HashtableBase = (size, val_type) ->
  val_type ?= Types.Int32
- ItemType = Struct '__ItemType__',
-  {property: 'key', type: Types.String}
-  {property: 'hash', type: Types.Int32}
-  {property: 'val', type: val_type}
-  {property: 'next', type: Types.Float64}
+ ListTerminal = HashtableListTerminal
+ if HashtableItemTypes[val_type]?
+  ItemType = HashtableItemTypes[val_type]
+ else
+  ItemType = HashtableItemTypes[val_type] = Struct '__ItemType__',
+   {property: 'key', type: Types.String}
+   {property: 'hash', type: Types.Int32}
+   {property: 'val', type: val_type}
+   {property: 'next', type: Types.Float64}
 
  lists = new ArrayList ListTerminal, size
  items = new ArrayList ItemType, null
