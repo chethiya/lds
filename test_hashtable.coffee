@@ -26,6 +26,7 @@ test_tds = (n) ->
  console.log s
 
  map.summarize()
+ TDS.cleanup()
 
 test_js = (n) ->
  console.time 'time_js_add'
@@ -51,6 +52,7 @@ run = (n) ->
 
  test_js n
  test_tds n
+ test_tds n
 
-run 3000000
+run 1000
 

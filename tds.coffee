@@ -75,9 +75,9 @@ StringAlloc = ->
 
  create = (str) ->
   if i_lViewPos is lastViewLen
-   addView()
+   _addView()
   if i_lCharPos is lastCharLen
-   addChar()
+   _addChar()
 
   len = str.length
   lastView[0][i_lViewPos] = len
@@ -86,16 +86,16 @@ StringAlloc = ->
   lastView[3][i_lViewPos] = 1
   for i in [0...len]
    if i_lCharPos is lastCharLen
-    addChar()
+    _addChar()
    lastChar[i_lCharPos++] = str.charCodeAt i
   view = i_lView #these two variables are used outside after calling create()
   viewPos = i_lViewPos
   i_lViewPos++
   return
 
- addView = ->
+ _addView = ->
   size = lastViewLen
-  while size * 16 * 2 <= MAX_BYTES
+  if size * 16 * 2 <= MAX_BYTES
    size = size << 1
   buffer = new ArrayBuffer size * 16
   lastView = new Array 4
@@ -107,9 +107,9 @@ StringAlloc = ->
   i_lViewPos = 0
   i_lView++
 
- addChar = ->
+ _addChar = ->
   size = lastCharLen
-  while size * 2 * 2 <= MAX_BYTES
+  if size * 2 * 2 <= MAX_BYTES
    size = size << 1
 
   buffer = new ArrayBuffer size << 1
@@ -128,6 +128,107 @@ StringAlloc = ->
   if x is 0 and y is 0
    return
   views[x][3][y]--
+  return
+
+ cleanup = ->
+  i = j = 0
+  iLen = charLens[i]
+  ii = jj = 0
+  iiLen = iLen
+  iChar = chars[i]
+  iiChar = iChar
+
+  x = 0
+  y = 1
+  xLen = viewLens[x]
+  xView = views[0]
+
+  xx = x
+  yy = y
+  xxLen = xLen
+  xxView = xView
+
+  moved = skipped = 0
+
+  while true
+   if y is i_lViewPos and x is i_lView
+    break
+   if y is xLen
+    y = 0
+    x++
+    xLen = viewLens[x]
+    xView  = views[x]
+
+   if xView[3][y] is 0 # garbage collect
+    skipped++
+    len = xView[0][y]
+    for cnt in [0...len] # TODO this loop need to be removed
+     if j is iLen
+      j = 0
+      i++
+      iLen = charLens[i]
+      iChar = chars[i]
+     j++
+    y++
+   else #don't garbage collect
+    if yy is xxLen
+     yy = 0
+     xx++
+     xxLen = viewLens[xx]
+     xxView = views[xx]
+
+    moved++
+    len = xView[0][y]
+    for cnt in [0...len]
+     if j is iLen
+      j = 0
+      i++
+      iLen = charLens[i]
+      iChar = chars[i]
+     if jj is iiLen
+      jj = 0
+      ii++
+      iiLen = charLens[ii]
+      iiChar = chars[ii]
+     iiChar[jj] = iChar[j]
+     jj++
+     j++
+
+    xxView[0][yy] = xView[0][y]
+    xxView[1][yy] = xView[1][y]
+    xxView[2][yy] = xView[2][y]
+    xxView[3][yy] = xView[3][y]
+    y++
+    yy++
+
+  if i_lView > xx
+   for cnt in [i_lView..xx+1]
+    if views[cnt]?
+     delete views[cnt]
+  console.log 'Cleanup report'
+  console.log "new view: (#{xx}, #{yy}) old view: (#{i_lView}, #{i_lViewPos})"
+  i_lView = xx
+  i_lViewPos = yy
+  lastView = views[xx]
+  if not lastView?
+   lastView = views[xx-1]
+  lastViewLen = lastView.length
+
+  if i_lChar > ii
+   for cnt in [i_lChar..ii+1]
+    if chars[cnt]?
+     delete chars[cnt]
+  console.log "new char: (#{ii}, #{jj}) old char: (#{i_lChar}, #{i_lCharPos})"
+  i_lChar = ii
+  i_lCharPos = jj
+  lastChar = chars[ii]
+  if not lastChar?
+   lastChar = chars[ii-1]
+  lastCharLen = lastChar.length
+
+  console.log "Garbage collection done"
+  console.log "#{skipped} strings are garbage collected"
+  console.log "#{moved} strings are moved"
   return
 
  B = 8191 #  is 1<<13  -  1
@@ -231,6 +332,7 @@ StringAlloc = ->
  RES =
   retain: retain
   release: release
+  cleanup: cleanup
   String: StringClass
  RES
 
@@ -425,6 +527,8 @@ Struct = ->
     k2 = TypeArrays[t][1]
     for j in [0...lengths[i]]
      p = @pos * k1 + j * k2
+     if t is Types.String
+      StringAlloc.release @views[i][p], @views[i][p+1]
      for k in [0...k2]
       @views[i][p+k] = struct.views[i][struct.pos*k1 + j*k2 + k]
      if t is Types.String
@@ -683,7 +787,7 @@ HashtableBase = (size, val_type) ->
      cnt++
     if not li.next()
      li = lists.get i+1, li
-   console.log 'summarry'
+   console.log 'Hastable summarry'
    console.log "lists with no items: #{cnt} out of #{size}"
  new HashtableBaseClass
 
@@ -691,6 +795,8 @@ TDS =
  Types: Types
  Struct: Struct
  String: StringClass
+ cleanup: ->
+  StringAlloc.cleanup()
  Array: TDSArray
  ArrayList: ArrayList
  HashtableBase: HashtableBase
