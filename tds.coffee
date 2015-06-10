@@ -665,7 +665,7 @@ ArrayList = (struct, start_size) ->
     lastArr = TDS.Array struct, size<<1
     tarViews = lastArr.getViews()
     for j in [0...views.length]
-     for i in [0...size]
+     for i in [0...views[j].length]
       tarViews[j][i] = views[j][i]
     tarViews = null
     views = null
