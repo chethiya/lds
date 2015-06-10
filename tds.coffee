@@ -694,7 +694,7 @@ HashtableBase = (size, val_type) ->
  if HashtableItemTypes[val_type]?
   ItemType = HashtableItemTypes[val_type]
  else
-  ItemType = HashtableItemTypes[val_type] = Struct '__ItemType__',
+  ItemType = HashtableItemTypes[val_type] = Struct "__ItemType__#{val_type}",
    {property: 'key', type: Types.String}
    {property: 'hash', type: Types.Int32}
    {property: 'val', type: val_type}
@@ -793,6 +793,32 @@ HashtableBase = (size, val_type) ->
    console.log "lists with no items: #{cnt} out of #{size}"
  new HashtableBaseClass
 
+
+Hashtable = (size, struct) ->
+ val_type = Types.Float64
+ items = new ArrayList struct, null
+ base = HashtableBase size, val_type
+ length = 0
+
+ class HashtableClass
+  constructor: ->
+
+  get: (key, string_ref, structIns) ->
+   val = base.get key, string_ref
+   if not val?
+    base.set key, length++, string_ref
+    return items.add structIns
+   return items.get val, structIns
+
+  check: (key, string_ref) ->
+   val = base.get key, string_ref
+   if not val?
+    return off
+   else
+    return on
+
+ new HashtableClass()
+
 TDS =
  Types: Types
  Struct: Struct
@@ -802,6 +828,7 @@ TDS =
  Array: TDSArray
  ArrayList: ArrayList
  HashtableBase: HashtableBase
+ Hashtable: Hashtable
 
 if GLOBAL?
  module.exports = TDS
