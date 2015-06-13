@@ -718,6 +718,7 @@ HashtableBase = (size, val_type) ->
     s = key
     s.retain()
    else
+    key = "#{key}"
     s = new StringClass key
    hash = s.hash()
    #console.log "hash: #{hash}"
@@ -761,6 +762,7 @@ HashtableBase = (size, val_type) ->
     s = key
     s.retain()
    else
+    key = "#{key}"
     s = new StringClass key
    hash = s.hash()
    pos = hash % size
