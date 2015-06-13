@@ -1,0 +1,31 @@
+{
+  "name": "tds",
+  "version": "0.1.0",
+  "description": "Memory limits in v8 is limited to somewhere around ~1.7GB when it comes to Object and Arrays. TDS tries to overcome this barrier by making use of Typed Arrays by defining these data structures.",
+  "main": "build/tds.js",
+  "directories": {
+    "test": "test"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/chethiya/tds.git"
+  },
+  "keywords": [
+    "tds",
+    "typed",
+    "arrays",
+    "max_old_space_size",
+    "hashtable",
+    "array",
+    "list"
+  ],
+  "author": "Chethiya Abeysinghe <chethiya@gmail.com> (chethiya.github.io)",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/chethiya/tds/issues"
+  },
+  "homepage": "https://github.com/chethiya/tds#readme"
+}
