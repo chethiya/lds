@@ -80,7 +80,7 @@ test_tds_obj = (n) ->
  people = TDS.Hashtable n, Person
  instance = null
  for i in [0...n]
-  instance = people.get "#{i}", off, instance
+  instance = people.get "#{i}", instance
   instance.copyFrom p2
 
   for j in [0...5]
@@ -96,7 +96,7 @@ test_tds_obj = (n) ->
   if not people.check "#{p}"
    console.log p, null
   else
-   console.log p, (people.get "#{p}", off, instance).getAddress()
+   console.log p, (people.get "#{p}", instance).getAddress()
 
 run = (n) ->
  Person = TDS.Struct "Person",
@@ -141,4 +141,4 @@ if GLOBAL?
 else
  TDS = window.TDS
 
-run 3000000
+run 1000

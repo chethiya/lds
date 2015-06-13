@@ -805,7 +805,7 @@ Hashtable = (size, struct) ->
  class HashtableClass
   constructor: ->
 
-  get: (key, string_ref, structIns) ->
+  get: (key, structIns, string_ref) ->
    val = base.get key, string_ref
    if not val?
     base.set key, length++, string_ref
