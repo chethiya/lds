@@ -1,10 +1,9 @@
 {
   "name": "lds",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Memory limits in v8 is limited to somewhere around ~1.7GB when it comes to Object and Arrays. LargeDS (lDS) tries to overcome this barrier by making use of Typed Arrays by defining these data structures.",
   "main": "build/lds.js",
   "directories": {
-    "test": "test"
   },
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
@@ -15,9 +14,9 @@
   },
   "keywords": [
     "lds",
-    "typed",
-    "arrays",
-    "max_old_space_size",
+    "typed arrays",
+    "LargeDS",
+    "max_heap_space_size",
     "hashtable",
     "array",
     "list"
