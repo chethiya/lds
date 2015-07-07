@@ -1,7 +1,7 @@
 {
   "name": "lds",
-  "version": "0.2.0",
-  "description": "Memory limits in v8 is limited to somewhere around ~1.7GB when it comes to Object and Arrays. LargeDS (lDS) tries to overcome this barrier by making use of Typed Arrays by defining these data structures.",
+  "version": "0.2.1",
+  "description": "Memory limits in v8 is limited to somewhere around ~1.7GB when it comes to Object and Arrays. LargeDS (LDS) tries to overcome this barrier by making use of Typed Arrays by defining basic datastructure like Hashtables and ArrayLists",
   "main": "build/lds.js",
   "directories": {
   },
@@ -16,10 +16,13 @@
     "lds",
     "typed arrays",
     "LargeDS",
-    "max_heap_space_size",
+    "max heap size",
     "hashtable",
     "array",
-    "list"
+    "list",
+    "vector",
+    "large",
+    "data structures"
   ],
   "author": "Chethiya Abeysinghe <chethiya@gmail.com> (chethiya.github.io)",
   "license": "MIT",
