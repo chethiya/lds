@@ -1,11 +1,11 @@
-TDS = null
+LDS = null
 ind = []
 Person = p2 = null
 
 
-test_tds = (n) ->
- console.time 'time_tds_add'
- map = TDS.HashtableBase n, TDS.Types.Int32
+test_lds = (n) ->
+ console.time 'time_lds_add'
+ map = LDS.HashtableBase n, LDS.Types.Int32
 
  #map.set "key-0", 3
  #map.set "key-1", 4
@@ -16,9 +16,9 @@ test_tds = (n) ->
   map.set "key-#{i}", i
   #console.log "#{i} -> #{map.get "#{i}"}"
   #console.log i, map.get "key-#{i}"
- console.timeEnd 'time_tds_add'
+ console.timeEnd 'time_lds_add'
 
- console.time 'time_tds_get'
+ console.time 'time_lds_get'
  s = 0
  for i in [0...n]
   p = ind[i]
@@ -26,11 +26,11 @@ test_tds = (n) ->
   #console.log "#{p} -> #{v}"
   s += v
   #console.log p, v
- console.timeEnd 'time_tds_get'
+ console.timeEnd 'time_lds_get'
  console.log s
 
  map.summarize()
- TDS.cleanup()
+ LDS.cleanup()
 
 test_js = (n) ->
  console.time 'time_js_add'
@@ -74,10 +74,10 @@ test_js_obj = (n) ->
   console.log p, people["#{p}"]?.address
 
 
-test_tds_obj = (n) ->
+test_lds_obj = (n) ->
  console.time 'time_hashtable'
  arr = new Array 5
- people = TDS.Hashtable n, Person
+ people = LDS.Hashtable n, Person
  instance = null
  for i in [0...n]
   instance = people.get "#{i}", instance
@@ -99,11 +99,11 @@ test_tds_obj = (n) ->
    console.log p, (people.get "#{p}", instance).getAddress()
 
 run = (n) ->
- Person = TDS.Struct "Person",
-  {property: 'name', type: TDS.Types.String, length: 1}
-  {property: 'age', type: TDS.Types.Int16}
-  {property: 'values', type: TDS.Types.Int32, length: 5}
-  {property: 'address', type: TDS.Types.String, length: 5}
+ Person = LDS.Struct "Person",
+  {property: 'name', type: LDS.Types.String, length: 1}
+  {property: 'age', type: LDS.Types.Int16}
+  {property: 'values', type: LDS.Types.Int32, length: 5}
+  {property: 'address', type: LDS.Types.String, length: 5}
 
  p = new Person
  p.setName 'asdf'
@@ -111,7 +111,7 @@ run = (n) ->
  p.setValues [1, 2, 3]
  p.setAddress ["No. 123", "Street 1", "Street 2", ""]
  p.setAddress "3 - thrid", 3
- str = new TDS.String "4-fourth"
+ str = new LDS.String "4-fourth"
  p.setAddress str, 4, on
  str.release()
 
@@ -125,20 +125,20 @@ run = (n) ->
   ind.push p
 
  test_js n
- test_tds n
+ test_lds n
 
  console.log "Test Hashtable - Object"
  console.log "------------------------"
  test_js_obj n
- test_tds_obj n
+ test_lds_obj n
 
- #itest_tds n
- #TDS.cleanup()
+ #itest_lds n
+ #LDS.cleanup()
 
 
 if GLOBAL?
- TDS = require './tds'
+ LDS = require './lds'
 else
- TDS = window.TDS
+ LDS = window.LDS
 
 run 1000

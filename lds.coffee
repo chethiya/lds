@@ -337,9 +337,9 @@ StringClass = StringAlloc.String
 ###
 e.g.
 
-Person = TDS.Struct "Person",
- {property: "name", type: TDS.Types.String}
- {property: "address", type: TDS.Types.String, length: 3}
+Person = LDS.Struct "Person",
+ {property: "name", type: LDS.Types.String}
+ {property: "address", type: LDS.Types.String, length: 3}
 
 p = new Person()
 console.log p.get()
@@ -571,7 +571,7 @@ Struct = ->
  StructClass
 
 
-TDSArray = (struct, length) ->
+LDSArray = (struct, length) ->
  views = null
 
  class ArrayClass
@@ -634,7 +634,7 @@ ArrayList = (struct, start_size) ->
 
    length = 0
    while true
-    lastArr = TDSArray struct, size
+    lastArr = LDSArray struct, size
     arrays.push lastArr
     if length + size >= start_size
      i_lArrPos = start_size - length
@@ -662,7 +662,7 @@ ArrayList = (struct, start_size) ->
   _addArray: ->
    if size < max_size
     views = lastArr.getViews()
-    lastArr = TDS.Array struct, size<<1
+    lastArr = LDS.Array struct, size<<1
     tarViews = lastArr.getViews()
     for j in [0...views.length]
      for i in [0...views[j].length]
@@ -674,7 +674,7 @@ ArrayList = (struct, start_size) ->
     i_lArrPos = size
     size = size << 1
    else
-    lastArr = TDS.Array struct, size
+    lastArr = LDS.Array struct, size
     arrays.push lastArr
     i_lArr++
     i_lArrPos = 0
@@ -821,19 +821,19 @@ Hashtable = (size, struct) ->
 
  new HashtableClass()
 
-TDS =
+LDS =
  Types: Types
  Struct: Struct
  String: StringClass
  cleanup: ->
   StringAlloc.cleanup()
- Array: TDSArray
+ Array: LDSArray
  ArrayList: ArrayList
  HashtableBase: HashtableBase
  Hashtable: Hashtable
 
 if GLOBAL?
- module.exports = TDS
+ module.exports = LDS
 else
- window.TDS = TDS
+ window.LDS = LDS
 

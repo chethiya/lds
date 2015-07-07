@@ -1,10 +1,10 @@
-TDS = require './tds'
+LDS = require './lds'
 
-Str = TDS.Struct "StringS",
- {property: 'name', type: TDS.Types.String, length: 1}
+Str = LDS.Struct "StringS",
+ {property: 'name', type: LDS.Types.String, length: 1}
 
 run = (n) ->
- arr = TDS.Array Str, n
+ arr = LDS.Array Str, n
  instance = arr.get 0
  for i in [0...n]
   instance.setName "Name #{i}"
@@ -17,6 +17,6 @@ run = (n) ->
   instance = arr.get p, instance
   instance.copyFrom temp
 
- TDS.cleanup()
+ LDS.cleanup()
 run 10
 

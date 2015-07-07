@@ -1,10 +1,10 @@
-TDS = require './tds'
+LDS = require './lds'
 
-Person = TDS.Struct "Person",
- {property: 'name', type: TDS.Types.String, length: 1}
- {property: 'age', type: TDS.Types.Int16}
- {property: 'values', type: TDS.Types.Int32, length: 5}
- {property: 'address', type: TDS.Types.String, length: 5}
+Person = LDS.Struct "Person",
+ {property: 'name', type: LDS.Types.String, length: 1}
+ {property: 'age', type: LDS.Types.Int16}
+ {property: 'values', type: LDS.Types.Int32, length: 5}
+ {property: 'address', type: LDS.Types.String, length: 5}
 
 
 
@@ -14,7 +14,7 @@ p.setAge 23
 p.setValues [1, 2, 3]
 p.setAddress ["No. 123", "Street 1", "Street 2", ""]
 p.setAddress "3 - thrid", 3
-str = new TDS.String "4-fourth"
+str = new LDS.String "4-fourth"
 p.setAddress str, 4, on
 str.release()
 
@@ -51,7 +51,7 @@ test_struct = (n) ->
 test_array = (n) ->
  console.time 'time_array'
  arr = new Array 5
- people = new TDS.Array Person, n
+ people = new LDS.Array Person, n
  instance = people.get 0
  for i in [0...n]
   instance.copyFrom p2
@@ -71,7 +71,7 @@ test_array = (n) ->
 test_arraylist = (n) ->
  console.time 'time_arraylist'
  arr = new Array 5
- people = new TDS.ArrayList Person, n
+ people = new LDS.ArrayList Person, n
  instance = people.get 0
  for i in [0...n]
   instance.copyFrom p2
@@ -94,7 +94,7 @@ test_arraylist = (n) ->
 test_arraylist_add = (n) ->
  console.time 'time_arraylist_add'
  arr = new Array 5
- people = new TDS.ArrayList Person
+ people = new LDS.ArrayList Person
  for i in [0...n]
   instance = people.add instance
   instance.copyFrom p2
