@@ -1,11 +1,11 @@
 # lds
-Memory limits in v8 is limited to somewhere around ~1.7GB when it comes to Object and Arrays. LargeDS (LDS) tries to overcome this barrier by making use of Typed Arrays by defining basic datastructure like Hashtables and ArrayLists
+Memory limits in v8 is limited to somewhere around ~1.7GB when it comes to Object and Arrays. LargeDS (LDS) tries to overcome this barrier by making use of Typed Arrays by defining basic data structure like Hashtables and ArrayLists
 
 ### The Problem
 
  I use CoffeeScript (Node.js) extensively to analyze large data sets. Time to time I run out of available memory provided by v8 for JS Objects and Arrays.
  >>> ["CoffeeScript is a little language that compiles into JavaScript."](http://coffeescript.org/)
-  
+
  Even in 64-bit Node.js (as of version 0.12) there is ~1.5GB memory limit. But this memory limit does not apply for Types Arrays. I don't believe this is case where we need to look for another resort like C, specially given the flexibility offered by JavaScript.
 
 ### What is LDS
@@ -17,7 +17,7 @@ Memory limits in v8 is limited to somewhere around ~1.7GB when it comes to Objec
 
  Here's how to use LDS to implement ``<string,number>`` map in Coffescript.
 
- >>> At the moment LDS only supports String keys in hash tables 
+ >>> At the moment LDS only supports String keys in hash tables
 
  ```coffeescript
   LDS = require 'lds'
@@ -34,24 +34,24 @@ Memory limits in v8 is limited to somewhere around ~1.7GB when it comes to Objec
   ```
    npm install lds
   ```
-  
+
   And require it as follows
 
   ```javascript
    LDS = require('lds')
   ```
-  
+
  #### Browser
   ```html
    <script src="https://github.com/chethiya/lds/blob/master/build/lds.js"></script>
   ```
-  
+
   And consume it as follows
 
   ```javascript
    LDS = window.LDS
   ```
-  
+
 ###Struct
 
  To represent related values, LDS has an implementation of Struct. A struct definition contains a list of root level property names and the types. Supported types are:
@@ -64,7 +64,7 @@ Memory limits in v8 is limited to somewhere around ~1.7GB when it comes to Objec
   Float64
   String
  ```
- 
+
  >>> LDS has it's own implementation of String. It uses 2-byte fixed with character encoding so that there is always one-to-one transformation between JS native String and LDS.String
 
  Here's an example definition of Struct
@@ -76,7 +76,7 @@ Memory limits in v8 is limited to somewhere around ~1.7GB when it comes to Objec
    {property: 'values', type: LDS.Types.Int32, length: 5}
    {property: 'address', type: LDS.Types.String, length: 5}
  ```
- 
+
  * property 'name' is a String
  * property 'age' is a 16-bit integer
  * property 'values' is a fixed-length array of 32-bit integer
@@ -94,15 +94,15 @@ Memory limits in v8 is limited to somewhere around ~1.7GB when it comes to Objec
  ```coffeescript
   p.setAddress ["No. 123", "Street 1", "Street 2", ""]
   p.setAddress "index-3-new", 3
- ``` 
- 
+ ```
+
  >>> 4th element in ``address`` array is changed to a new value ``index-3-new``
 
  ```coffeescript
   str = new LDS.String "4-fourth"
   p.setAddress str, 4, on
  ```
- 
+
  >>> Sets the 5th element of ``address`` to LDS.string ``str``
 
  By setting the 3rd argument to ``true`` in all setter functions, one can pass in an LDS.String values instead of a JS native String
@@ -118,13 +118,13 @@ Memory limits in v8 is limited to somewhere around ~1.7GB when it comes to Objec
  ```coffeescript
   console.log p.get()
  ```
- 
+
  >>> LDS.StructClass.get() method returns a JSON object of the struct instance.
 
  ```coffeescript
   console.log p.getAddress 2
  ```
- 
+
  >>> If a property in a Struct is an array, then the 1st argument of getters will be  the index of the respective array.
 
  ```coffeescript
@@ -137,7 +137,7 @@ Memory limits in v8 is limited to somewhere around ~1.7GB when it comes to Objec
   p2.copyFrom p
   console.log p2.get()
  ```
- 
+
  >>> 2nd argument of getters is the ```string_flag``` that indicates the return value is a LDS.String object. You'll have to ``release()`` those objects after consuming.
 
  ``Struct.copyFrom()`` method copies the content from source struct buffer area to target struct buffer area. LDS.Strings are copied by reference.
