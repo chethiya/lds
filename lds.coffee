@@ -57,7 +57,7 @@ StringAlloc = ->
 
  size = INT_SIZE
  buffer = new ArrayBuffer size << 1
- chars.push new Int16Array buffer
+ chars.push new Uint16Array buffer
  charLens.push size
  lastChar = chars[0]
  lastCharLen = size
@@ -113,7 +113,7 @@ StringAlloc = ->
    size = size << 1
 
   buffer = new ArrayBuffer size << 1
-  lastChar = new Int16Array buffer
+  lastChar = new Uint16Array buffer
   chars.push lastChar
   charLens.push size
   lastCharLen = size
