@@ -587,6 +587,7 @@ LDSArray = (struct, length) ->
    if structIns?
     structIns.views = views
     structIns.pos = i
+    structIns.viewLen = length
    else
     structIns = new struct null, views, i, length
    structIns
@@ -664,6 +665,13 @@ ArrayList = (struct, start_size) ->
     views = lastArr.getViews()
     lastArr = LDS.Array struct, size<<1
     tarViews = lastArr.getViews()
+
+    ### JS-bug init all elements to 0
+    for j in [0...tarViews.length]
+     for i in [0...tarViews[j].length]
+      tarViews[j][i] = 0
+    ###
+
     for j in [0...views.length]
      for i in [0...views[j].length]
       tarViews[j][i] = views[j][i]
