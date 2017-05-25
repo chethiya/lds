@@ -1,3 +1,5 @@
+Update: LDS2 written in Typescript with more unit tests and better API is WIP at [https://github.com/chethiya/lds](https://github.com/chethiya/lds).
+
 # lds
 Memory limits in v8 is limited to somewhere around ~1.7GB when it comes to Object and Arrays. LargeDS (LDS) tries to overcome this barrier by making use of Typed Arrays by defining basic data structure like Hashtables and ArrayLists
 
